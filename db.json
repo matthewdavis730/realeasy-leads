@@ -1,0 +1,115 @@
+{
+  "profile": {
+    "name": "Apex Plumbing & Rooter",
+    "license": "CSLB #1094851",
+    "walletBalance": 650,
+    "activeCitiesFilter": [
+      "newark",
+      "las vegas"
+    ],
+    "smsAlerts": true,
+    "emailReports": true,
+    "description": "Apex Plumbing & Rooter has been providing premium commercial and residential drain cleaning, pipe replacements, and emergency plumbing services in the Bay Area and Las Vegas since 2012.",
+    "phone": "(510) 555-9000",
+    "email": "contact@apexplumbing.com",
+    "verified": false
+  },
+  "leads": [
+    {
+      "id": "lead-1784498870112",
+      "niche": "plumbing",
+      "title": "Emergency Gas Water Heater Leak",
+      "city": "Newark, CA",
+      "description": "Emergency gas water heater tank is leaking. Basement floor has water pooling. Customer needs a plumber out immediately.",
+      "price": 30,
+      "customerName": "David Vance",
+      "customerPhone": "(510) 555-0811",
+      "unlocked": false,
+      "date": "Just now",
+      "status": "unlocked",
+      "jobRevenue": 0,
+      "disputed": false,
+      "disputeReason": ""
+    },
+    {
+      "id": "lead-1",
+      "niche": "plumbing",
+      "title": "Whole Home PEX Repiping",
+      "city": "Newark, CA",
+      "description": "Aging copper pipes corroding, causing low water pressure and rust-colored water in a single-family home. Homeowner wants a full replacement with modern PEX piping.",
+      "price": 35,
+      "customerName": "James Miller",
+      "customerPhone": "(510) 555-0143",
+      "unlocked": false,
+      "date": "10 mins ago",
+      "status": "unlocked",
+      "jobRevenue": 0,
+      "disputed": false,
+      "disputeReason": ""
+    },
+    {
+      "id": "lead-2",
+      "niche": "roofing",
+      "title": "Commercial Flat Roof Patch & Seal",
+      "city": "Las Vegas, NV",
+      "description": "Active leaks detected over the main warehouse bay. Flat TPO roofing needs patching, sealing, and a reflective coating applied before the heat increases.",
+      "price": 45,
+      "customerName": "Sarah Jenkins (Vegas Logistics)",
+      "customerPhone": "(702) 608-4491",
+      "unlocked": false,
+      "date": "2 hours ago",
+      "status": "unlocked",
+      "jobRevenue": 0,
+      "disputed": false,
+      "disputeReason": ""
+    },
+    {
+      "id": "lead-3",
+      "niche": "plumbing",
+      "title": "Gas Water Heater Leak & Replacement",
+      "city": "Newark, CA",
+      "description": "50-gallon gas water heater is leaking from the bottom valve. Needs immediate replacement with a energy-efficient unit.",
+      "price": 25,
+      "customerName": "Robert Chen",
+      "customerPhone": "(510) 555-0988",
+      "unlocked": false,
+      "date": "4 hours ago",
+      "status": "unlocked",
+      "jobRevenue": 0,
+      "disputed": false,
+      "disputeReason": ""
+    },
+    {
+      "id": "lead-4",
+      "niche": "roofing",
+      "title": "Emergency Shingle Roof Repair",
+      "city": "San Rafael, CA (Bay Area)",
+      "description": "Wind damage caused shingles to blow off a residential roof. Water is starting to seep into the attic. Needs immediate tarping and shingle patch.",
+      "price": 30,
+      "customerName": "Michael Thompson",
+      "customerPhone": "(415) 521-8977",
+      "unlocked": false,
+      "date": "1 day ago",
+      "status": "unlocked",
+      "jobRevenue": 0,
+      "disputed": false,
+      "disputeReason": ""
+    }
+  ],
+  "transactions": [
+    {
+      "type": "deposit",
+      "amount": 500,
+      "title": "Stripe Mock Deposit",
+      "date": "04:09 AM, Jul 20"
+    },
+    {
+      "type": "deposit",
+      "amount": 150,
+      "title": "Initial Platform Credit",
+      "date": "Joined Platform"
+    }
+  ],
+  "disputes": [],
+  "callLogs": []
+}

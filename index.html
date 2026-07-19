@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RealEasy Leads - Contractor Marketplace Dashboard</title>
+  <meta name="description" content="Premium local lead generation and marketplace portal for home service contractors.">
+  <link rel="stylesheet" href="styles.css?v=1.0.6">
+</head>
+<body>
+  <!-- On-Screen Console Logger for direct debugging -->
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      const errDiv = document.createElement("div");
+      errDiv.style.position = "absolute";
+      errDiv.style.top = "10px";
+      errDiv.style.left = "10px";
+      errDiv.style.right = "10px";
+      errDiv.style.background = "rgba(239, 68, 68, 0.95)";
+      errDiv.style.color = "white";
+      errDiv.style.padding = "15px";
+      errDiv.style.borderRadius = "12px";
+      errDiv.style.fontSize = "11px";
+      errDiv.style.fontFamily = "monospace";
+      errDiv.style.zIndex = "10000";
+      errDiv.style.whiteSpace = "pre-wrap";
+      errDiv.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+      errDiv.style.border = "1px solid rgba(255,255,255,0.2)";
+      errDiv.innerHTML = `<strong>JS Error:</strong> \${message}<br><br><strong>Source:</strong> \${source.split('/').pop()}:\${lineno}:\${colno}`;
+      document.body.appendChild(errDiv);
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      const errDiv = document.createElement("div");
+      errDiv.style.position = "absolute";
+      errDiv.style.top = "10px";
+      errDiv.style.left = "10px";
+      errDiv.style.right = "10px";
+      errDiv.style.background = "rgba(239, 68, 68, 0.95)";
+      errDiv.style.color = "white";
+      errDiv.style.padding = "15px";
+      errDiv.style.borderRadius = "12px";
+      errDiv.style.fontSize = "11px";
+      errDiv.style.fontFamily = "monospace";
+      errDiv.style.zIndex = "10000";
+      errDiv.style.whiteSpace = "pre-wrap";
+      errDiv.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+      errDiv.style.border = "1px solid rgba(255,255,255,0.2)";
+      errDiv.innerHTML = `<strong>Promise Reject:</strong> \${event.reason}`;
+      document.body.appendChild(errDiv);
+    });
+  </script>
+
+  <!-- MOBILE DEVICE MOCKUP FRAME (iPhone style) -->
+  <div class="device-frame">
+    
+    <!-- iPhone Notch / Dynamic Island -->
+    <div class="dynamic-island" id="dynamic-island"></div>
+    
+    <!-- iOS Status Bar -->
+    <div class="status-bar">
+      <span class="status-time" id="status-time">9:41</span>
+      <div class="status-icons">
+        <!-- Signal Strength SVG -->
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor">
+          <rect x="0" y="8" width="2.5" height="3" rx="0.5" />
+          <rect x="3.5" y="6" width="2.5" height="5" rx="0.5" />
+          <rect x="7" y="4" width="2.5" height="7" rx="0.5" />
+          <rect x="10.5" y="2" width="2.5" height="9" rx="0.5" />
+          <rect x="14" y="0" width="2.5" height="11" rx="0.5" />
+        </svg>
+        <!-- Wifi SVG -->
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor">
+          <path d="M7.5 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-3.75-4.2a5.25 5.25 0 0 1 7.5 0l-.7.7a4.25 4.25 0 0 0-6.1 0l-.7-.7zm-1.4-1.4a7.25 7.25 0 0 1 10.3 0l-.7.7a6.25 6.25 0 0 0-8.9 0l-.7-.7zm-1.4-1.4a9.25 9.25 0 0 1 13.1 0l-.7.7a8.25 8.25 0 0 0-11.7 0l-.7-.7z"/>
+        </svg>
+        <!-- Battery SVG -->
+        <svg width="22" height="11" viewBox="0 0 22 11" fill="currentColor">
+          <rect x="0" y="0" width="19" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1" />
+          <rect x="2" y="2" width="13" height="7" rx="1.5" />
+          <path d="M20 3.5v4" stroke="currentColor" stroke-linecap="round" stroke-width="1" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- iOS STYLE SMS NOTIFICATION BANNER -->
+    <div id="sms-notification" style="position: absolute; top: 12px; left: 12px; right: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1010; transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer;">
+      <div style="width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 14px; color: white;">RE</div>
+      <div style="flex: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+          <span style="font-size: 11px; font-weight: 700; color: var(--text-primary);">RealEasy Leads</span>
+          <span style="font-size: 9px; color: var(--text-muted);">now</span>
+        </div>
+        <p id="sms-text" style="font-size: 11px; color: var(--text-secondary); line-height: 1.3; margin: 0;">New Available Lead: Whole Home Repiping in Newark, CA.</p>
+      </div>
+    </div>
+
+    <!-- APP HEADER -->
+    <header class="app-header">
+      <div class="app-title">
+        <h1 id="main-heading">RealEasy Leads</h1>
+        <p>Contractor Portal</p>
+      </div>
+      <div class="wallet-badge" id="wallet-trigger" title="Click to Add Funds">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <line x1="12" y1="4" x2="12" y2="20" />
+          <line x1="2" y1="12" x2="22" y2="12" />
+        </svg>
+        <span id="header-wallet-balance">$150.00</span>
+      </div>
+    </header>
+
+    <!-- MAIN INTERACTIVE CONTENT AREA -->
+    <main class="main-content" id="main-content-scroll">
+      
+      <!-- SCREEN 1: LEADS MARKETPLACE (ACTIVE SCREEN BY DEFAULT) -->
+      <section class="app-screen active" id="screen-marketplace">
+        
+        <!-- Wallet Card Showcase -->
+        <div class="wallet-card">
+          <div class="wallet-details">
+            <span class="wallet-label">Available Balance</span>
+            <div class="wallet-balance" id="wallet-display-balance">150.00</div>
+            <button class="btn btn-primary" id="add-funds-btn-main">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Deposit
+            </button>
+          </div>
+        </div>
+
+        <!-- Section Header -->
+        <div class="section-header">
+          <h2>Marketplace Feed</h2>
+          <button class="btn btn-secondary" id="simulate-ai-call-btn" style="padding: 6px 12px; font-size: 11px; border-radius: 12px; background: rgba(99, 102, 241, 0.12); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.25);">
+            🤖 AI Sim Call
+          </button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; margin-top: -8px;">
+          <span class="wallet-label" id="available-count-badge">5 Leads Available</span>
+          
+          <!-- View Toggle Switch -->
+          <div class="view-toggle" style="display: flex; background: rgba(255,255,255,0.03); border: 1px solid var(--border-card); border-radius: 20px; padding: 2px;">
+            <button class="toggle-btn active" id="view-list-btn" style="padding: 4px 12px; font-size: 10px; border-radius: 15px; border: none; background: rgba(255,255,255,0.06); color: var(--text-primary); cursor: pointer; font-weight: 700; transition: all 0.2s;">List</button>
+            <button class="toggle-btn" id="view-map-btn" style="padding: 4px 12px; font-size: 10px; border-radius: 15px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 700; transition: all 0.2s;">🗺️ Map</button>
+          </div>
+        </div>
+
+        <!-- SEARCH & CATEGORY FILTERS CONTAINER -->
+        <div class="search-filter-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+          <div style="position: relative; width: 100%;">
+            <input type="text" id="lead-search-input" placeholder="Search by city or job keyword..." style="width: 100%; padding: 10px 14px 10px 36px; border-radius: 14px; border: 1px solid var(--border-card); background: rgba(255,255,255,0.02); color: var(--text-primary); font-size: 12px; outline: none; transition: border-color 0.2s;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+              <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <button id="search-clear-btn" style="display:none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); border:none; background:none; color:var(--text-muted); cursor:pointer; font-size:16px; font-weight:700;">&times;</button>
+          </div>
+
+          <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px;">
+            <button class="filter-pill active" data-filter="all" style="padding: 6px 14px; font-size: 11px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.06); color: var(--text-primary); cursor: pointer; font-weight: 700; transition: all 0.2s;">All Niches</button>
+            <button class="filter-pill" data-filter="plumbing" style="padding: 6px 14px; font-size: 11px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.15); background: transparent; color: var(--text-secondary); cursor: pointer; font-weight: 700; transition: all 0.2s;">Plumbing</button>
+            <button class="filter-pill" data-filter="roofing" style="padding: 6px 14px; font-size: 11px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.15); background: transparent; color: var(--text-secondary); cursor: pointer; font-weight: 700; transition: all 0.2s;">Roofing</button>
+          </div>
+        </div>
+
+        <!-- Available Leads Container -->
+        <div class="leads-list" id="available-leads-container">
+          <!-- Dynamically Populated by app.js -->
+        </div>
+
+        <!-- Radar Map Container -->
+        <div id="map-view-container" style="display: none; position: relative; width: 100%; height: 330px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-card); border-radius: 20px; overflow: hidden; margin-top: 10px; animation: cardFadeIn 0.3s ease;">
+          <!-- SVG Radar Map Background -->
+          <svg id="radar-map-svg" width="100%" height="100%" viewBox="0 0 280 330" style="background: #050811;">
+            <!-- Grid Lines -->
+            <defs>
+              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            
+            <!-- Map Boundaries Outline -->
+            <path d="M 20 60 Q 60 40 100 80 T 180 120 T 260 160" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="2" stroke-dasharray="4 4" />
+            <path d="M 40 120 Q 100 130 150 180 T 250 250" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="2" stroke-dasharray="4 4" />
+            
+            <!-- Bay Area Label -->
+            <text x="30" y="45" fill="rgba(255,255,255,0.25)" font-size="9" font-weight="700" letter-spacing="1">BAY AREA, CA</text>
+            <!-- Las Vegas Label -->
+            <text x="160" y="275" fill="rgba(255,255,255,0.25)" font-size="9" font-weight="700" letter-spacing="1">LAS VEGAS, NV</text>
+            
+            <!-- Dynamic Markers Group -->
+            <g id="map-markers-group"></g>
+          </svg>
+
+          <!-- Map Popup Card -->
+          <div id="map-popup-card" style="display: none; position: absolute; bottom: 12px; left: 12px; right: 12px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(99, 102, 241, 0.35); border-radius: 14px; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); animation: cardFadeIn 0.2s ease; z-index: 10;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+              <span id="popup-badge" class="lead-badge" style="font-size: 8px; padding: 2px 6px;">Niche</span>
+              <span id="popup-price" style="font-size: 13px; font-weight: 800; color: var(--success);">$30.00</span>
+            </div>
+            <h4 id="popup-title" style="font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Job Title</h4>
+            <p id="popup-location" style="font-size: 10px; color: var(--text-muted); margin-bottom: 10px;">Newark, CA</p>
+            <button id="popup-unlock-btn" class="btn btn-primary" style="width: 100%; padding: 6px 0; font-size: 11px; border-radius: 8px;">
+              Unlock Lead Details
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: UNLOCKED LEADS -->
+      <section class="app-screen" id="screen-unlocked">
+        <div class="section-header">
+          <h2>My Unlocked Leads</h2>
+          <span class="wallet-label" id="unlocked-count-badge">0 Leads Unlocked</span>
+        </div>
+        
+        <!-- Unlocked Leads Feed -->
+        <div class="leads-list" id="unlocked-leads-container">
+          <!-- Dynamically Populated by app.js -->
+        </div>
+      </section>
+
+
+      <!-- SCREEN 3: CONTRACTOR PROFILE & SETTINGS -->
+      <section class="app-screen" id="screen-profile" style="padding-bottom: 80px;">
+        <div class="section-header" style="margin-bottom: 20px;">
+          <h2>My Profile</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: -2px;">Manage Business Account Settings</p>
+        </div>
+
+        <!-- Profile Details Card & Editor (Phase 4 Upgrade) -->
+        <div class="lead-card" id="profile-details-display" style="padding: 18px 15px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 12px;">
+            <div id="profile-avatar" style="width: 52px; height: 52px; background: linear-gradient(135deg, var(--primary), #4f46e5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 18px; color: white; box-shadow: 0 4px 15px rgba(99,102,241,0.25);">
+              AP
+            </div>
+            <div style="flex: 1;">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+                <h3 id="profile-display-name" style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0;">Apex Plumbing &amp; Rooter</h3>
+                <span id="profile-verification-badge" style="font-size: 8px; font-weight: 700; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 8px;">⚠️ Unverified</span>
+              </div>
+              <p id="profile-display-license" style="font-size: 11px; color: var(--text-secondary); margin-top: 3px;">licensee: CSLB #1094851</p>
+            </div>
+          </div>
+
+          <!-- Description, Contact Details & Verification Trigger -->
+          <div style="border-top: 1px solid rgba(255,255,255,0.03); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+            <div style="color: var(--text-secondary); line-height: 1.5; font-style: italic; margin-bottom: 6px;" id="profile-display-desc">
+              Apex Plumbing &amp; Rooter has been providing premium services since 2012.
+            </div>
+            <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+              <span>Phone:</span> <span id="profile-display-phone" style="color: var(--text-primary); font-weight: 600;">(510) 555-9000</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: var(--text-muted); margin-bottom: 8px;">
+              <span>Email:</span> <span id="profile-display-email" style="color: var(--text-primary); font-weight: 600;">contact@apexplumbing.com</span>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+              <button id="profile-edit-btn" class="btn btn-secondary" style="flex: 1; font-size: 11px; padding: 6px 0; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);">✏️ Edit Profile</button>
+            </div>
+
+            <!-- Verification Documents Card (Collapsible) -->
+            <details id="profile-verify-accordion" class="lead-card" style="border: 1px dashed rgba(255,255,255,0.08); background: rgba(0,0,0,0.15); margin-top: 10px; padding: 12px; display: block;">
+              <summary style="font-size: 11px; font-weight: 700; cursor: pointer; color: var(--text-primary); user-select: none;">
+                🛡️ Submit Verification Documents
+              </summary>
+              <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 11px;">
+                <p style="color: var(--text-muted); margin: 0 0 5px 0; line-height: 1.4;">To verify your profile, upload a copy of your State ID and your physical CSLB Contractor license pocket card.</p>
+                
+                <div class="form-group">
+                  <label style="font-size: 9px; margin-bottom: 2px;">1. Government Issued Photo ID</label>
+                  <input type="file" id="verify-id-file" accept="image/*" class="form-input" style="padding: 4px; font-size: 10px; background: rgba(0,0,0,0.2);">
+                </div>
+                
+                <div class="form-group">
+                  <label style="font-size: 9px; margin-bottom: 2px;">2. CSLB Pocket Card Copy</label>
+                  <input type="file" id="verify-license-file" accept="image/*" class="form-input" style="padding: 4px; font-size: 10px; background: rgba(0,0,0,0.2);">
+                </div>
+                
+                <button id="profile-verify-submit-btn" class="btn btn-primary" style="font-size: 11px; padding: 6px 0; border-radius: 8px; background: var(--success); width: 100%; margin-top: 5px;">
+                  🚀 Submit Documents for Audit
+                </button>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- Profile Edit Form (Hidden by default) -->
+        <div class="lead-card" id="profile-edit-container" style="display: none; padding: 18px 15px; margin-bottom: 20px;">
+          <h4 style="font-size: 11px; margin-bottom: 15px; color: var(--text-primary); font-weight: 700; text-transform: uppercase;">Edit Business Profile</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Avatar Upload controls (Phase 4 Custom Feature) -->
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 5px;">
+              <div id="profile-edit-avatar-preview" style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary), #4f46e5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 16px; color: white; overflow: hidden; box-shadow: 0 4px 10px rgba(99,102,241,0.2);">
+                AP
+              </div>
+              <div>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('profile-file-input').click()" style="padding: 6px 12px; font-size: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); border-radius: 8px;">📷 Upload Logo/Photo</button>
+                <input type="file" id="profile-file-input" accept="image/*" style="display: none;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="profile-input-name" style="font-size: 9px;">Business Name</label>
+              <input type="text" id="profile-input-name" class="form-input" style="padding: 8px 12px; font-size: 12px;">
+            </div>
+            <div class="form-group">
+              <label for="profile-input-license" style="font-size: 9px;">CSLB License Number</label>
+              <input type="text" id="profile-input-license" class="form-input" style="padding: 8px 12px; font-size: 12px;">
+            </div>
+            <div class="form-group">
+              <label for="profile-input-phone" style="font-size: 9px;">Public Business Phone</label>
+              <input type="tel" id="profile-input-phone" class="form-input" style="padding: 8px 12px; font-size: 12px;">
+            </div>
+            <div class="form-group">
+              <label for="profile-input-email" style="font-size: 9px;">Public Business Email</label>
+              <input type="email" id="profile-input-email" class="form-input" style="padding: 8px 12px; font-size: 12px;">
+            </div>
+            <div class="form-group">
+              <label for="profile-input-desc" style="font-size: 9px;">Business Description</label>
+              <textarea id="profile-input-desc" class="form-input" style="padding: 8px 12px; font-size: 12px; min-height: 60px; resize: none;"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+              <button id="profile-cancel-btn" class="btn btn-secondary" style="flex: 1; font-size: 11px; padding: 8px 0; border-radius: 10px;">Cancel</button>
+              <button id="profile-save-btn" class="btn btn-primary" style="flex: 1; font-size: 11px; padding: 8px 0; border-radius: 10px;">Save Profile</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Stats -->
+        <h4 style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-primary); margin-bottom: 12px; font-weight: 700;">Account Statistics</h4>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px;">
+          <div class="lead-card" style="padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Leads Unlocked</span>
+            <div id="profile-leads-unlocked" style="font-size: 20px; font-weight: 800; color: var(--text-primary); font-family: var(--font-display);">0</div>
+          </div>
+          <div class="lead-card" style="padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Capital Spent</span>
+            <div id="profile-total-spent" style="font-size: 20px; font-weight: 800; color: var(--text-primary); font-family: var(--font-display);">$0.00</div>
+          </div>
+        </div>
+
+        <!-- Service Preferences -->
+        <div class="lead-card" style="margin-bottom: 25px;">
+          <h4 style="font-size: 11px; margin-bottom: 15px; color: var(--text-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Service Preferences</h4>
+          
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">Focus Cities (Click to toggle)</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="profile-cities-container">
+              <span class="city-pref-badge active" data-city="newark" style="font-size: 10px; padding: 4px 10px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); color: var(--success); font-weight: 600; cursor: pointer; transition: all 0.2s;">Newark, CA</span>
+              <span class="city-pref-badge active" data-city="las vegas" style="font-size: 10px; padding: 4px 10px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); color: var(--success); font-weight: 600; cursor: pointer; transition: all 0.2s;">Las Vegas, NV</span>
+              <span class="city-pref-badge" data-city="san rafael" style="font-size: 10px; padding: 4px 10px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); font-weight: 600; cursor: pointer; transition: all 0.2s;">San Rafael, CA</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">Notification Settings</label>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+              <span style="font-size: 12px; color: var(--text-secondary);">Real-Time SMS Alerts</span>
+              <div class="switch-toggle active" id="toggle-sms" style="width: 38px; height: 20px; background: var(--success); border-radius: 20px; position: relative; cursor: pointer; transition: all 0.3s;">
+                <div class="switch-knob" style="width: 16px; height: 16px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 20px; transition: all 0.3s;"></div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0;">
+              <span style="font-size: 12px; color: var(--text-secondary);">Email Summary Reports</span>
+              <div class="switch-toggle" id="toggle-email" style="width: 38px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 20px; position: relative; cursor: pointer; transition: all 0.3s;">
+                <div class="switch-knob" style="width: 16px; height: 16px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.3s;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Call Logs Section (Phase 4 Upgrade) -->
+        <details class="lead-card" style="margin-bottom: 25px;">
+          <summary style="font-size: 11px; font-weight: 700; cursor: pointer; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; user-select: none;">
+            📞 Completed Call History Logs
+          </summary>
+          <div id="profile-calls-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px; max-height: 250px; overflow-y: auto;">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </details>
+
+        <button id="reset-mockup-btn" class="btn btn-secondary" style="width: 100%; border: 1px dashed rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); color: #f87171; border-radius: 14px; padding: 12px 0; cursor: pointer; transition: all 0.2s;">
+          ⚠️ Reset Mockup to Defaults
+        </button>
+      </section>
+
+      <!-- SCREEN 4: ADMIN PORTAL & ANALYTICS -->
+      <section class="app-screen" id="screen-admin" style="padding-bottom: 80px;">
+        <div class="section-header">
+          <h2>Admin Dashboard</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: -2px;">RealEasy Leads Platform Performance</p>
+        </div>
+
+        <!-- Dashboard Stats Cards (Phase 4 ROI Upgrade) -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px;">
+          <div class="lead-card" style="padding: 10px 8px; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 8px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Acquisition Cost (<span id="analytics-unlocked-count" style="display:inline; font-weight:700;">0/4</span>)</span>
+            <div id="analytics-spend" style="font-size: 15px; font-weight: 800; color: var(--text-primary); font-family: var(--font-display);">$0.00</div>
+          </div>
+          <div class="lead-card" style="padding: 10px 8px; margin: 0; display: flex; flex-direction: column; gap: 4px; background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.1);">
+            <span style="font-size: 8px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Job Revenue</span>
+            <div id="analytics-revenue" style="font-size: 15px; font-weight: 800; color: var(--success); font-family: var(--font-display);">$0.00</div>
+          </div>
+          <div class="lead-card" style="padding: 10px 8px; margin: 0; display: flex; flex-direction: column; gap: 4px; background: rgba(99, 102, 241, 0.03); border: 1px solid rgba(99, 102, 241, 0.1);">
+            <span style="font-size: 8px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Contractor ROI</span>
+            <div id="analytics-roi" style="font-size: 15px; font-weight: 800; color: var(--primary); font-family: var(--font-display);">0%</div>
+          </div>
+        </div>
+
+        <!-- Visual Bar Chart Card -->
+        <div class="lead-card" style="margin-bottom: 25px;">
+          <h4 style="font-size: 11px; margin-bottom: 15px; color: var(--text-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Weekly Revenue Chart</h4>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 120px; padding: 10px 5px 0 5px; border-bottom: 1px solid var(--border-card); margin-bottom: 8px;">
+            <!-- Monday Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 10%; height: 100%; justify-content: flex-end;">
+              <div id="bar-mon" style="width: 100%; height: 25%; background: var(--primary); border-radius: 4px 4px 0 0; transition: height 0.8s ease; position: relative;">
+                <span class="bar-value" style="display:none; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-primary); font-weight: 700;">$30</span>
+              </div>
+              <span style="font-size: 9px; color: var(--text-muted); margin-top: 6px;">M</span>
+            </div>
+            <!-- Tuesday Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 10%; height: 100%; justify-content: flex-end;">
+              <div id="bar-tue" style="width: 100%; height: 0%; background: var(--primary); border-radius: 4px 4px 0 0; transition: height 0.8s ease; position: relative;">
+                <span class="bar-value" style="display:none; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-primary); font-weight: 700;">$0</span>
+              </div>
+              <span style="font-size: 9px; color: var(--text-muted); margin-top: 6px;">T</span>
+            </div>
+            <!-- Wednesday Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 10%; height: 100%; justify-content: flex-end;">
+              <div id="bar-wed" style="width: 100%; height: 30%; background: var(--primary); border-radius: 4px 4px 0 0; transition: height 0.8s ease; position: relative;">
+                <span class="bar-value" style="display:none; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-primary); font-weight: 700;">$35</span>
+              </div>
+              <span style="font-size: 9px; color: var(--text-muted); margin-top: 6px;">W</span>
+            </div>
+            <!-- Thursday Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 10%; height: 100%; justify-content: flex-end;">
+              <div id="bar-thu" style="width: 100%; height: 25%; background: var(--primary); border-radius: 4px 4px 0 0; transition: height 0.8s ease; position: relative;">
+                <span class="bar-value" style="display:none; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-primary); font-weight: 700;">$30</span>
+              </div>
+              <span style="font-size: 9px; color: var(--text-muted); margin-top: 6px;">T</span>
+            </div>
+            <!-- Friday Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 10%; height: 100%; justify-content: flex-end;">
+              <div id="bar-fri" style="width: 100%; height: 50%; background: var(--primary); border-radius: 4px 4px 0 0; transition: height 0.8s ease; position: relative;">
+                <span class="bar-value" style="display:none; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-primary); font-weight: 700;">$60</span>
+              </div>
+              <span style="font-size: 9px; color: var(--text-muted); margin-top: 6px;">F</span>
+            </div>
+            <!-- Saturday Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 10%; height: 100%; justify-content: flex-end;">
+              <div id="bar-sat" style="width: 100%; height: 20%; background: var(--primary); border-radius: 4px 4px 0 0; transition: height 0.8s ease; position: relative;">
+                <span class="bar-value" style="display:none; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--text-primary); font-weight: 700;">$25</span>
+              </div>
+              <span style="font-size: 9px; color: var(--text-muted); margin-top: 6px;">S</span>
+            </div>
+            <!-- Sunday Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 10%; height: 100%; justify-content: flex-end;">
+              <div id="bar-sun" style="width: 100%; height: 0%; background: var(--success); border-radius: 4px 4px 0 0; transition: height 0.8s ease; position: relative; box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);">
+                <span id="bar-sun-value" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: var(--success); font-weight: 700;">$0</span>
+              </div>
+              <span style="font-size: 9px; color: var(--text-muted); margin-top: 6px;">S</span>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--text-muted); margin-top: 5px;">
+            <span>Week performance</span>
+            <span>Target: $300/wk</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Disputes Ledger (Phase 4 Upgrade) -->
+        <div class="lead-card" style="margin-bottom: 25px; display: none;" id="admin-disputes-card">
+          <h4 style="font-size: 11px; margin-bottom: 15px; color: var(--text-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Lead Disputes Ledger</h4>
+          <div id="admin-disputes-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+
+        <!-- Dynamic Verification Ledger (Alternative Safe verification) -->
+        <div class="lead-card" style="margin-bottom: 25px; display: none;" id="admin-verify-card">
+          <h4 style="font-size: 11px; margin-bottom: 15px; color: var(--text-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Pending Profile Audits</h4>
+          <div id="admin-verify-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+
+        <!-- Post Lead Form (Collapsible) -->
+        <details class="lead-card" style="border: 1px dashed rgba(255,255,255,0.08); background: rgba(0,0,0,0.15);" open>
+          <summary style="font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-primary); user-select: none;">
+            🔧 Post a New Test Lead
+          </summary>
+          
+          <form id="post-lead-form" style="margin-top: 15px;">
+            <div class="form-group">
+              <label for="lead-niche">Service Niche</label>
+              <select id="lead-niche" class="form-input form-select" required>
+                <option value="plumbing">Plumbing &amp; Whole Home Repipe</option>
+                <option value="roofing">Commercial Roofing Replacement</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="lead-title">Lead Title / Location Description</label>
+              <input type="text" id="lead-title" class="form-input" placeholder="e.g. Copper Repiping needed in Newark" required>
+            </div>
+
+            <div class="form-group">
+              <label for="lead-city">City / Neighborhood</label>
+              <input type="text" id="lead-city" class="form-input" placeholder="e.g. Newark, CA" required>
+            </div>
+
+            <div class="form-group">
+              <label for="lead-desc">Detailed Problem Description</label>
+              <textarea id="lead-desc" class="form-input" style="min-height: 80px; resize: none;" placeholder="Provide details of the job..." required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="lead-price">Lead Unlocking Price ($)</label>
+              <input type="number" id="lead-price" class="form-input" value="30" min="5" required>
+            </div>
+
+            <div class="form-group">
+              <label for="lead-name">Customer Full Name</label>
+              <input type="text" id="lead-name" class="form-input" placeholder="e.g. John Doe" required>
+            </div>
+
+            <div class="form-group">
+              <label for="lead-phone">Customer Phone Number</label>
+              <input type="tel" id="lead-phone" class="form-input" placeholder="e.g. 510-555-0199" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;" id="post-lead-submit">
+              Post Lead to Market
+            </button>
+          </form>
+        </details>
+      </section>
+
+    </main>
+
+    <!-- INTERACTIVE SLIDE-UP MODAL (Add Deposit) -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-sheet" id="modal-sheet" style="height: 75%; display: flex; flex-direction: column; bottom: -100%;">
+      <div class="modal-drag-bar"></div>
+      <div class="modal-header">
+        <h3>Deposit Funds</h3>
+        <button class="close-btn" id="modal-close-btn" aria-label="Close modal">&times;</button>
+      </div>
+      
+      <form id="deposit-form" style="margin-bottom: 5px;">
+        <div class="form-group">
+          <label for="deposit-amount">Deposit Amount (USD)</label>
+          <input type="number" id="deposit-amount" class="form-input" value="50" min="10" max="1000" required>
+        </div>
+
+        <!-- Simulated Stripe Card Input Frame -->
+        <div class="form-group">
+          <label>Payment Method (Simulated Stripe Elements)</label>
+          <div class="form-input" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02);">
+            <span style="font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="12" viewBox="0 0 24 16" fill="currentColor" style="color: var(--primary);">
+                <rect width="24" height="16" rx="2" />
+                <rect y="3" width="24" height="3" fill="#000" />
+              </svg>
+              ••••  ••••  ••••  4242
+            </span>
+            <span style="font-size: 11px; color: var(--text-muted);">12/28</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;" id="deposit-submit">
+          Confirm Mock Deposit
+        </button>
+      </form>
+
+      <!-- Transaction History Section -->
+      <div style="margin-top: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid var(--border-card); padding-top: 15px;">
+        <h4 style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-primary); margin-bottom: 10px; font-weight: 700;">Transaction History</h4>
+        <div id="transaction-history-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 10px; scroll-behavior: smooth;">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </div>
+
+      <!-- Simulated Stripe Payment Processing Overlay -->
+      <div id="stripe-loading-overlay" style="display:none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(10, 10, 18, 0.95); backdrop-filter: blur(8px); border-radius: 24px; z-index: 10; flex-direction: column; align-items: center; justify-content: center; gap: 15px; opacity:0; transition: opacity 0.3s;">
+        <div class="stripe-spinner" style="width: 38px; height: 38px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Processing Secure Deposit...</div>
+        <div style="font-size: 9px; color: var(--text-muted); font-family: var(--font-display);">Authorized via Stripe Elements</div>
+      </div>
+    </div>
+
+    <!-- AI CALL SIMULATION MODAL SHEET -->
+    <div class="modal-overlay" id="ai-chat-overlay"></div>
+    <div class="modal-sheet" id="ai-chat-sheet" style="height: 70%; display: flex; flex-direction: column; bottom: -100%;">
+      <div class="modal-drag-bar"></div>
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width: 10px; height: 10px; background: var(--success); border-radius:50%; box-shadow: 0 0 8px var(--success);"></div>
+          <h3 style="font-size: 15px;">AI Dispatch Assistant</h3>
+        </div>
+        <button class="close-btn" id="ai-chat-close-btn" aria-label="Close chat modal">&times;</button>
+      </div>
+      
+      <div id="ai-chat-body" style="flex: 1; overflow-y: auto; padding: 10px 0; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth;">
+        <!-- Dynamically rendered bubbles -->
+      </div>
+
+      <div style="padding-top: 15px; border-top: 1px solid var(--border-card); text-align: center; display: flex; flex-direction: column; gap: 4px;">
+        <span class="wallet-label" id="ai-status-label" style="font-size: 11px; color: var(--text-secondary);">Connecting inbound call...</span>
+        <div id="ai-typing-indicator" style="display:none; justify-content:center; gap:4px; margin-top:5px;">
+          <span style="width: 6px; height: 6px; background: var(--text-secondary); border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease-in-out both;"></span>
+          <span style="width: 6px; height: 6px; background: var(--text-secondary); border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease-in-out both; animation-delay: 0.2s;"></span>
+          <span style="width: 6px; height: 6px; background: var(--text-secondary); border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease-in-out both; animation-delay: 0.4s;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- iOS CALL DIALER MODAL sheet -->
+    <div class="modal-overlay" id="call-dialer-overlay" style="z-index: 1005;"></div>
+    <div class="modal-sheet" id="call-dialer-sheet" style="height: 100%; border-radius: 0px; background: #070a14; display: flex; flex-direction: column; justify-content: space-between; padding: 40px 30px 60px 30px; bottom: -100%; z-index: 1006;">
+      <div style="height: 20px;"></div>
+      
+      <!-- Customer Calling details -->
+      <div style="text-align: center;">
+        <span style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 2px; font-weight: 600;">Outgoing Call</span>
+        <h2 id="dialer-customer-name" style="font-family: var(--font-display); font-size: 26px; font-weight: 800; margin-top: 12px; color: var(--text-primary);">James Miller</h2>
+        <p id="dialer-call-status" style="font-size: 13px; color: var(--success); margin-top: 8px; font-weight: 600; letter-spacing: 0.5px;">calling...</p>
+      </div>
+
+      <!-- Live Voice transcript or prompt -->
+      <div id="dialer-transcript-container" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-card); border-radius: 20px; padding: 20px; height: 200px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; text-align: left; margin: 20px 0; overflow-y: auto; scroll-behavior: smooth;">
+        <div id="dialer-transcript" style="font-size: 13px; line-height: 1.6; color: var(--text-secondary); font-style: normal; transition: var(--transition-smooth); width: 100%;">[Ringing...]</div>
+      </div>
+
+      <!-- Action buttons mimicking iOS Call screen -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 40px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px 30px; justify-items: center; width: 100%;">
+          <div class="dialer-action-btn" style="width: 54px; height: 54px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></div>
+          <div class="dialer-action-btn" style="width: 54px; height: 54px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg></div>
+          <div class="dialer-action-btn" style="width: 54px; height: 54px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg></div>
+        </div>
+        
+        <button id="end-call-btn" style="width: 68px; height: 68px; background: var(--error); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35); transition: transform 0.2s;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(135deg);">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+        </button>
+      </div>
+      <div style="height: 10px;"></div>
+    </div>
+
+    <!-- PREMIUM BOTTOM NAVIGATION BAR (iOS Style Glass) -->
+    <nav class="nav-bar" style="gap: 5px;">
+      <!-- Nav Item 1: Marketplace -->
+      <div class="nav-item active" id="nav-marketplace" data-screen="screen-marketplace">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="9" />
+          <rect x="14" y="3" width="7" height="5" />
+          <rect x="14" y="12" width="7" height="9" />
+          <rect x="3" y="16" width="7" height="5" />
+        </svg>
+        <span>Market</span>
+      </div>
+
+      <!-- Nav Item 2: Unlocked -->
+      <div class="nav-item" id="nav-unlocked" data-screen="screen-unlocked">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <span>Unlocked</span>
+      </div>
+
+      <!-- Nav Item 3: Profile -->
+      <div class="nav-item" id="nav-profile" data-screen="screen-profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>Profile</span>
+      </div>
+
+      <!-- Nav Item 4: Admin Dashboard -->
+      <div class="nav-item" id="nav-admin" data-screen="screen-admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Admin</span>
+      </div>
+    </nav>
+
+    <!-- iOS Home Bar Indicator -->
+    <div class="home-indicator"></div>
+
+  </div>
+
+  <script src="app.js?v=1.0.6"></script>
+</body>
+</html>
