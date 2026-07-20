@@ -101,6 +101,16 @@ function connectWebSocket() {
         if (currentUser && currentUser.role === 'admin') {
           fetchAdminContractors();
         }
+      } else if (data.type === 'HOMEOWNER_SUSPENSION_TOGGLED') {
+        if (currentUser && currentUser.id === data.homeownerId) {
+          if (data.suspended) {
+            alert("Your homeowner account has been suspended by Admin. You are being logged out.");
+            handleLogout();
+          }
+        }
+        if (currentUser && currentUser.role === 'admin') {
+          fetchAdminHomeowners();
+        }
       }
     } catch(e) {
       console.error("Error parsing WebSocket message:", e);
@@ -370,6 +380,7 @@ function initApp() {
       fetchLeads(),
       fetchDisputes(),
       fetchAdminContractors(),
+      fetchAdminHomeowners(),
       fetchPricingRules(),
       fetchAiInstructions()
     ]).then(() => {
@@ -640,6 +651,202 @@ function setupAuthListeners() {
   }
 }
 
+// ==========================================================================
+// 🏠 HOMEOWNER PROFILE & ADDRESS BOOK MANAGEMENT
+// ==========================================================================
+function setupHomeownerSettingsListeners(user) {
+  const editBtn = document.getElementById("homeowner-edit-btn");
+  const cancelBtn = document.getElementById("homeowner-edit-cancel-btn");
+  const saveBtn = document.getElementById("homeowner-edit-save-btn");
+  
+  const displayCard = document.getElementById("homeowner-profile-display");
+  const editContainer = document.getElementById("homeowner-edit-container");
+
+  const inputName = document.getElementById("homeowner-input-name");
+  const inputPhone = document.getElementById("homeowner-input-phone");
+  const inputCity = document.getElementById("homeowner-input-city");
+
+  if (editBtn) {
+    editBtn.onclick = () => {
+      displayCard.style.display = "none";
+      editContainer.style.display = "block";
+      
+      if (inputName) inputName.value = currentUser.name || "";
+      if (inputPhone) inputPhone.value = currentUser.phone || "";
+      if (inputCity) inputCity.value = currentUser.city || "";
+    };
+  }
+
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      editContainer.style.display = "none";
+      displayCard.style.display = "flex";
+    };
+  }
+
+  if (saveBtn) {
+    saveBtn.onclick = () => {
+      const name = inputName.value.trim();
+      const phone = inputPhone.value.trim();
+      const city = inputCity.value.trim();
+
+      if (!name) {
+        alert("Name cannot be empty.");
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "⚡ Saving...";
+
+      fetch('/api/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, city })
+      })
+      .then(res => res.json())
+      .then(data => {
+        currentUser = data.profile;
+        safeStorage.setItem("re_current_user", JSON.stringify(currentUser));
+        
+        // Update display text
+        document.getElementById("homeowner-display-name").textContent = currentUser.name;
+        document.getElementById("homeowner-display-phone").textContent = currentUser.phone || "Not set";
+        document.getElementById("homeowner-display-city").textContent = currentUser.city || "Not set";
+        
+        editContainer.style.display = "none";
+        displayCard.style.display = "flex";
+        
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Changes";
+        triggerDynamicIslandNotification("✏️ Profile Updated!");
+      })
+      .catch(err => {
+        console.error("Homeowner profile save failed:", err);
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Changes";
+      });
+    };
+  }
+
+  // Address book listeners
+  const addPropBtn = document.getElementById("property-add-btn");
+  const propLabelInput = document.getElementById("property-input-label");
+  const propCityInput = document.getElementById("property-input-city");
+
+  if (addPropBtn) {
+    addPropBtn.onclick = () => {
+      const label = propLabelInput.value.trim();
+      const city = propCityInput.value;
+
+      if (!label) {
+        alert("Please enter a property label (e.g. Home, Office).");
+        return;
+      }
+
+      if (!currentUser.addresses) {
+        currentUser.addresses = [];
+      }
+
+      currentUser.addresses.push({
+        id: "addr-" + Date.now(),
+        label,
+        city
+      });
+
+      addPropBtn.disabled = true;
+      addPropBtn.textContent = "⚡ Saving Property...";
+
+      fetch('/api/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addresses: currentUser.addresses })
+      })
+      .then(res => res.json())
+      .then(data => {
+        currentUser = data.profile;
+        safeStorage.setItem("re_current_user", JSON.stringify(currentUser));
+        
+        renderHomeownerProperties(currentUser);
+        
+        propLabelInput.value = "";
+        addPropBtn.disabled = false;
+        addPropBtn.textContent = "Save Property Address";
+        triggerDynamicIslandNotification("🏡 Property Saved!");
+      })
+      .catch(err => {
+        console.error("Failed to save property:", err);
+        addPropBtn.disabled = false;
+        addPropBtn.textContent = "Save Property Address";
+      });
+    };
+  }
+}
+
+function renderHomeownerProperties(user) {
+  const container = document.getElementById("homeowner-properties-list");
+  const citySelect = document.getElementById("request-city");
+  
+  if (!container) return;
+
+  const addresses = user.addresses || [];
+
+  if (addresses.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 12px; color: var(--text-muted); font-size: 11px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+        No properties saved yet.
+      </div>
+    `;
+    
+    // Default locations for select list
+    if (citySelect) {
+      citySelect.innerHTML = `
+        <option value="Newark, CA">Newark, CA</option>
+        <option value="Las Vegas, NV">Las Vegas, NV</option>
+        <option value="San Rafael, CA">San Rafael, CA</option>
+      `;
+    }
+    return;
+  }
+
+  container.innerHTML = addresses.map(addr => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.02); border: 1px solid var(--border-card); padding: 8px 12px; border-radius: 10px;">
+      <div style="display:flex; flex-direction:column; gap:2px;">
+        <span style="font-size:11px; font-weight:800; color:#fff;">${addr.label}</span>
+        <span style="font-size:9px; color:var(--text-secondary);">${addr.city}</span>
+      </div>
+      <button class="btn btn-secondary" onclick="deleteHomeownerProperty('${addr.id}')" style="padding: 4px 8px; font-size: 10px; color: #f87171; border-color: rgba(239,68,68,0.15); line-height: 1;">Delete</button>
+    </div>
+  `).join('');
+
+  // Populate city selector dropdown on dispatch screen dynamically
+  if (citySelect) {
+    citySelect.innerHTML = addresses.map(addr => `
+      <option value="${addr.city}">${addr.label} (${addr.city})</option>
+    `).join('');
+  }
+}
+
+window.deleteHomeownerProperty = function(addressId) {
+  if (!confirm("Are you sure you want to delete this property address?")) return;
+
+  if (!currentUser.addresses) return;
+  currentUser.addresses = currentUser.addresses.filter(addr => addr.id !== addressId);
+
+  fetch('/api/profile/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ addresses: currentUser.addresses })
+  })
+  .then(res => res.json())
+  .then(data => {
+    currentUser = data.profile;
+    safeStorage.setItem("re_current_user", JSON.stringify(currentUser));
+    renderHomeownerProperties(currentUser);
+    triggerDynamicIslandNotification("🗑️ Property Removed!");
+  })
+  .catch(err => alert("Failed to remove property: " + err.message));
+};
+
 function applyRoleLayout(user) {
   const roleLabel = document.getElementById("header-user-role");
   const walletBadge = document.getElementById("wallet-trigger");
@@ -697,6 +904,13 @@ function applyRoleLayout(user) {
     if (avatarEl && user.name) {
       avatarEl.textContent = user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
     }
+
+    if (!user.addresses) {
+      user.addresses = [];
+    }
+
+    setupHomeownerSettingsListeners(user);
+    renderHomeownerProperties(user);
 
     const homeownerLogoutBtn = document.getElementById("homeowner-logout-btn");
     if (homeownerLogoutBtn) {
@@ -2611,6 +2825,29 @@ function setupHomeownerTickets() {
       badgeClass = "ticket-status-completed";
       statusText = "Completed";
     }
+
+    let contractorCardHtml = "";
+    if (t.unlocked && t.contractorName) {
+      const initial = t.contractorName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+      contractorCardHtml = `
+        <div style="margin-top: 12px; padding: 10px; background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 28px; height: 28px; background: linear-gradient(135deg, var(--success), #34d399); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: white;">
+              ${initial}
+            </div>
+            <div style="flex: 1;">
+              <h5 style="font-size: 11px; font-weight: 800; color: var(--text-primary); margin: 0;">Matched: ${t.contractorName}</h5>
+              <span style="font-size: 8px; color: var(--text-muted); text-transform: uppercase;">Specialty: ${t.contractorNiche}</span>
+            </div>
+          </div>
+          <a href="tel:${t.contractorPhone}" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 0; background: var(--success); color: white; border-radius: 8px; font-size: 10px; font-weight: 700; text-decoration: none; transition: transform 0.2s ease;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            📞 Call Contractor: ${t.contractorPhone}
+          </a>
+        </div>
+      `;
+    }
+
     return `
       <div class="lead-card" style="margin: 0; padding: 15px;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
@@ -2621,10 +2858,11 @@ function setupHomeownerTickets() {
           <span class="ticket-status-badge ${badgeClass}">${statusText}</span>
         </div>
         <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px;">${t.description}</p>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size: 10px; color: var(--text-muted);">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">
           <span>Location: <strong>${t.city}</strong></span>
           <span>Posted: <strong>${t.date || 'Just now'}</strong></span>
         </div>
+        ${contractorCardHtml}
       </div>
     `;
   }).join('');
@@ -2728,6 +2966,89 @@ function fetchAdminContractors() {
     })
     .catch(err => console.error("Error fetching contractors list:", err));
 }
+
+// FETCH REGISTERED HOMEOWNERS FOR ADMIN CENTER
+function fetchAdminHomeowners() {
+  const container = document.getElementById("admin-homeowners-list");
+  if (!container) return Promise.resolve();
+
+  return fetch('/api/admin/homeowners')
+    .then(res => res.json())
+    .then(homeowners => {
+      if (homeowners.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 15px 0; color: var(--text-muted); font-size: 11px;">
+            No homeowners registered yet.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = homeowners.map(h => {
+        let badgeColor = h.suspended ? "#f87171" : "var(--primary)";
+        let badgeBg = h.suspended ? "rgba(239, 68, 68, 0.05)" : "rgba(99, 102, 241, 0.05)";
+        let badgeBorder = h.suspended ? "rgba(239, 68, 68, 0.2)" : "rgba(99, 102, 241, 0.15)";
+        let statusText = h.suspended ? "SUSPENDED" : "ACTIVE CLIENT";
+
+        return `
+          <div class="lead-card" style="margin: 0; padding: 12px; background: rgba(0,0,0,0.1); border: 1px solid var(--border-card); display: flex; flex-direction: column; gap: 6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:800; color:#fff;">${h.name}</span>
+              <span style="font-size:7px; font-weight:800; color:${badgeColor}; background:${badgeBg}; padding:2px 6px; border-radius:6px; border:1px solid ${badgeBorder};">${statusText}</span>
+            </div>
+            <div style="font-size:10px; color:var(--text-secondary); line-height: 1.4;">
+              City: <strong>${h.city || 'Not specified'}</strong><br>
+              Phone: <strong>${h.phone || 'N/A'}</strong><br>
+              Email: <strong>${h.email}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 6px; margin-top: 2px;">
+              <span style="font-size: 9px; color: var(--text-muted);">Total Requests Posted</span>
+              <span style="font-size: 11px; font-weight: 800; color: var(--primary);">${h.requestCount} leads</span>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; border-top: 1px dashed rgba(255,255,255,0.03); padding-top: 6px; margin-top: 2px;">
+              <button class="btn btn-secondary" onclick="viewHomeownerJobs('${h.id}')" style="font-size:8px; padding:2px 8px;">View Job History</button>
+              <button class="btn ${h.suspended ? 'btn-primary' : 'btn-secondary'}" onclick="toggleHomeownerSuspension('${h.id}')" style="font-size:8px; padding:2px 8px; ${h.suspended ? 'background:var(--success); border-color:var(--success); color:#fff;' : 'color:#f87171; border-color:rgba(239,68,68,0.25);'}">
+                ${h.suspended ? 'Reactivate' : 'Suspend'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    })
+    .catch(err => console.error("Error fetching homeowners list:", err));
+}
+
+window.toggleHomeownerSuspension = function(homeownerId) {
+  const confirmAction = confirm("Are you sure you want to change the suspension state for this homeowner?");
+  if (!confirmAction) return;
+
+  fetch('/api/admin/homeowners/toggle-suspension', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ homeownerId })
+  })
+  .then(res => res.json())
+  .then(() => {
+    fetchAdminHomeowners();
+    triggerDynamicIslandNotification("Homeowner account status updated!");
+  })
+  .catch(err => alert("Failed to toggle suspension: " + err.message));
+};
+
+window.viewHomeownerJobs = function(homeownerId) {
+  fetch('/api/leads')
+    .then(res => res.json())
+    .then(allLeads => {
+      const homeownerLeads = allLeads.filter(l => l.customerId === homeownerId);
+      if (homeownerLeads.length === 0) {
+        alert("This client has not submitted any service requests yet.");
+      } else {
+        const titles = homeownerLeads.map((l, i) => `${i + 1}. [${l.niche.toUpperCase()}] ${l.title} (${l.city}) - Status: ${l.status}`).join('\n\n');
+        alert(`Service Request History:\n\n${titles}`);
+      }
+    });
+};
+
 
 // 👑 ADMIN: ADJUST CONTRACTOR BALANCE
 window.adjustContractorBalance = function(contractorId) {

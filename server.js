@@ -310,7 +310,7 @@ app.post('/api/auth/login', (req, res) => {
   }
 
   if (user.suspended) {
-    return res.status(403).json({ error: "Your contractor account has been suspended by Admin. Please contact support." });
+    return res.status(403).json({ error: `Your ${user.role} account has been suspended by Admin. Please contact support.` });
   }
 
   const { password: _, ...userWithoutPass } = user;
@@ -334,7 +334,7 @@ app.post('/api/profile/update', (req, res) => {
   const user = getRequestUser(req, db);
   if (!user) return res.status(404).json({ error: "User not found." });
 
-  const { activeCitiesFilter, smsAlerts, emailReports, name, license, description, phone, email, verified, avatarImage, verificationStatus, verificationIdDoc, verificationLicenseDoc, verificationRejectionReason } = req.body;
+  const { activeCitiesFilter, smsAlerts, emailReports, name, license, description, phone, email, verified, avatarImage, verificationStatus, verificationIdDoc, verificationLicenseDoc, verificationRejectionReason, addresses } = req.body;
 
   const dbUser = db.users.find(u => u.id === user.id);
 
@@ -352,6 +352,7 @@ app.post('/api/profile/update', (req, res) => {
   if (verificationIdDoc !== undefined) dbUser.verificationIdDoc = verificationIdDoc;
   if (verificationLicenseDoc !== undefined) dbUser.verificationLicenseDoc = verificationLicenseDoc;
   if (verificationRejectionReason !== undefined) dbUser.verificationRejectionReason = verificationRejectionReason;
+  if (addresses !== undefined) dbUser.addresses = addresses;
 
   writeDB(db);
   const { password, ...userWithoutPass } = dbUser;
@@ -421,10 +422,27 @@ app.get('/api/leads', (req, res) => {
   const db = readDB();
   const user = getRequestUser(req, db);
 
-  // If homeowner, return ONLY leads submitted by them
+  // If homeowner, return ONLY leads submitted by them with unlocking contractor info
   if (user && user.role === 'homeowner') {
     const homeownerLeads = db.leads.filter(l => l.customerId === user.id);
-    return res.json(homeownerLeads);
+    const leadsWithContractor = homeownerLeads.map(l => {
+      const unlock = db.unlocks.find(u => u.leadId === l.id);
+      if (unlock) {
+        const contractor = db.users.find(u => u.id === unlock.contractorId);
+        if (contractor) {
+          return {
+            ...l,
+            unlocked: true,
+            contractorName: contractor.name,
+            contractorPhone: contractor.phone,
+            contractorNiche: contractor.niche || 'plumbing',
+            contractorAvatar: contractor.avatarImage || ''
+          };
+        }
+      }
+      return { ...l, unlocked: false };
+    });
+    return res.json(leadsWithContractor);
   }
 
   // If Admin, return all leads with FULL details (but with correct unlocked state)
@@ -899,6 +917,47 @@ app.post('/api/admin/contractors/toggle-suspension', (req, res) => {
   
   broadcast({ type: "CONTRACTOR_SUSPENSION_TOGGLED", contractorId, suspended: targetContractor.suspended });
   res.json({ success: true, contractor: targetContractor });
+});
+
+// 🛡️ API ROUTE: ADMIN GET ALL HOMEOWNERS
+app.get('/api/admin/homeowners', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+
+  const homeowners = db.users
+    .filter(u => u.role === 'homeowner')
+    .map(h => {
+      // Calculate total requests submitted
+      const requestCount = db.leads.filter(l => l.customerId === h.id).length;
+      const { password, ...hNoPass } = h;
+      return { ...hNoPass, requestCount };
+    });
+
+  res.json(homeowners);
+});
+
+// 🛡️ API ROUTE: ADMIN TOGGLE HOMEOWNER SUSPENSION
+app.post('/api/admin/homeowners/toggle-suspension', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+
+  const { homeownerId } = req.body;
+  const targetHomeowner = db.users.find(u => u.id === homeownerId && u.role === 'homeowner');
+  if (!targetHomeowner) {
+    return res.status(404).json({ error: "Homeowner not found." });
+  }
+
+  targetHomeowner.suspended = !targetHomeowner.suspended;
+  writeDB(db);
+
+  broadcast({ type: "HOMEOWNER_SUSPENSION_TOGGLED", homeownerId, suspended: targetHomeowner.suspended });
+  res.json({ success: true, homeowner: targetHomeowner });
 });
 
 // 🛡️ API ROUTE: ADMIN GET PRICING RULES

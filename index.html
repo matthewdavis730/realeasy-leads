@@ -385,12 +385,12 @@
         </div>
 
         <!-- Homeowner Profile details card -->
-        <div class="lead-card" style="padding: 20px 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 14px;">
+        <div class="lead-card" id="homeowner-profile-display" style="padding: 20px 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 14px;">
           <div style="display: flex; align-items: center; gap: 15px;">
             <div id="homeowner-avatar-preview" style="width: 48px; height: 48px; background: linear-gradient(135deg, #38bdf8, #6366f1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 16px; color: white;">
               HO
             </div>
-            <div>
+            <div style="flex: 1;">
               <h3 id="homeowner-display-name" style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0;">David Vance</h3>
               <span style="font-size: 8px; font-weight: 700; color: #38bdf8; background: rgba(56,189,248,0.1); padding: 2px 6px; border-radius: 8px;">🏠 Homeowner Account</span>
             </div>
@@ -404,11 +404,72 @@
               <span>Phone:</span> <span id="homeowner-display-phone" style="color: var(--text-primary); font-weight: 600;">+1 510-555-0811</span>
             </div>
             <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
-              <span>Property City:</span> <span id="homeowner-display-city" style="color: var(--text-primary); font-weight: 600;">Newark, CA</span>
+              <span>Default City:</span> <span id="homeowner-display-city" style="color: var(--text-primary); font-weight: 600;">Newark, CA</span>
             </div>
           </div>
 
-          <button id="homeowner-logout-btn" class="btn btn-secondary" style="font-size: 11px; padding: 10px 0; border-radius: 12px; width: 100%; margin-top: 10px; border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; background: rgba(239, 68, 68, 0.03);">
+          <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <button id="homeowner-edit-btn" class="btn btn-secondary" style="flex: 1; font-size: 11px; padding: 8px 0; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);">✏️ Edit Profile</button>
+          </div>
+        </div>
+
+        <!-- Homeowner Profile Edit Form (Hidden by default) -->
+        <div class="lead-card" id="homeowner-edit-container" style="display: none; padding: 18px 15px; margin-top: 15px;">
+          <h4 style="font-size: 11px; margin-bottom: 12px; color: var(--text-primary); font-weight: 700; text-transform: uppercase;">Edit Customer Profile</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="form-group">
+              <label for="homeowner-input-name" style="font-size: 9px;">Your Full Name</label>
+              <input type="text" id="homeowner-input-name" class="form-input" style="padding: 8px 12px; font-size: 12px;">
+            </div>
+            <div class="form-group">
+              <label for="homeowner-input-phone" style="font-size: 9px;">Contact Phone</label>
+              <input type="tel" id="homeowner-input-phone" class="form-input" style="padding: 8px 12px; font-size: 12px;">
+            </div>
+            <div class="form-group">
+              <label for="homeowner-input-city" style="font-size: 9px;">Default City</label>
+              <input type="text" id="homeowner-input-city" class="form-input" style="padding: 8px 12px; font-size: 12px;">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+              <button id="homeowner-edit-cancel-btn" class="btn btn-secondary" style="flex: 1; font-size: 11px; padding: 8px 0; border-radius: 10px;">Cancel</button>
+              <button id="homeowner-edit-save-btn" class="btn btn-primary" style="flex: 1; font-size: 11px; padding: 8px 0; border-radius: 10px;">Save Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-Property Address Book Card -->
+        <div class="lead-card" style="padding: 15px; margin-top: 15px;">
+          <h4 style="font-size: 11px; margin-bottom: 12px; color: var(--text-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🏡 Saved Properties Address Book</h4>
+          
+          <div id="homeowner-properties-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+            <!-- Dynamically populated -->
+          </div>
+
+          <details style="border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 10px; margin-top: 10px;">
+            <summary style="font-size: 11px; font-weight: 700; cursor: pointer; color: var(--primary); user-select: none;">
+              ➕ Add New Property Address
+            </summary>
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+              <div class="form-group">
+                <label for="property-input-label" style="font-size: 9px;">Property Label (e.g. Home, Rental, Office)</label>
+                <input type="text" id="property-input-label" class="form-input" style="padding: 6px 10px; font-size: 11px;" placeholder="e.g. Office Building">
+              </div>
+              <div class="form-group">
+                <label for="property-input-city" style="font-size: 9px;">City / Location</label>
+                <select id="property-input-city" class="form-input" style="padding: 6px 10px; font-size: 11px;">
+                  <option value="Newark, CA">Newark, CA</option>
+                  <option value="Las Vegas, NV">Las Vegas, NV</option>
+                  <option value="San Rafael, CA">San Rafael, CA</option>
+                </select>
+              </div>
+              <button id="property-add-btn" class="btn btn-primary" style="font-size: 11px; padding: 6px 0; border-radius: 8px; width: 100%; margin-top: 5px;">
+                Save Property Address
+              </button>
+            </div>
+          </details>
+        </div>
+
+        <div style="margin-top: 15px; padding: 0 10px;">
+          <button id="homeowner-logout-btn" class="btn btn-secondary" style="font-size: 11px; padding: 10px 0; border-radius: 12px; width: 100%; border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; background: rgba(239, 68, 68, 0.03);">
             🚪 Log Out of Account
           </button>
         </div>
@@ -683,6 +744,14 @@
         <div class="lead-card" style="margin-bottom: 25px;" id="admin-contractors-card">
           <h4 style="font-size: 11px; margin-bottom: 15px; color: var(--text-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Registered Contractor Ledger</h4>
           <div id="admin-contractors-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+
+        <!-- Registered Homeowners Ledger -->
+        <div class="lead-card" style="margin-bottom: 25px;" id="admin-homeowners-card">
+          <h4 style="font-size: 11px; margin-bottom: 15px; color: var(--text-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Registered Homeowner Ledger</h4>
+          <div id="admin-homeowners-list" style="display: flex; flex-direction: column; gap: 10px;">
             <!-- Populated dynamically by app.js -->
           </div>
         </div>
