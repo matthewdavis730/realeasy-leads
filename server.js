@@ -450,8 +450,12 @@ app.get('/api/leads', (req, res) => {
   // If Admin, return all leads with FULL details (but with correct unlocked state)
   if (user && user.role === 'admin') {
     return res.json(db.leads.map(l => {
-      const isUnlocked = db.unlocks.some(u => u.leadId === l.id);
-      return { ...l, unlocked: isUnlocked };
+      const unlock = db.unlocks.find(u => u.leadId === l.id);
+      return {
+        ...l,
+        unlocked: !!unlock,
+        unlockedAt: unlock ? unlock.unlockedAt : null
+      };
     }));
   }
 

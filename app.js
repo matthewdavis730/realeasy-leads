@@ -2084,14 +2084,43 @@ function updateAnalyticsUI() {
     countEl.textContent = `${unlockedCount} / ${totalLeads}`;
   }
 
-  // Update Sunday bar height dynamically (Capped at 100% height relative to $150 week target)
-  const targetRevenue = 150;
-  const heightPercent = Math.min((totalRevenue / targetRevenue) * 100, 100);
-  
-  if (sunBar && sunVal) {
-    // Capped at 4% min to keep Sunday bar visible on baseline
-    sunBar.style.height = `${heightPercent === 0 ? 4 : heightPercent}%`;
-    sunVal.textContent = `$${totalRevenue.toFixed(0)}`;
+  // Calculate daily platform revenues from unlocks
+  const dailyRevenues = [0, 0, 0, 0, 0, 0, 0]; // Mon=0, Tue=1, ..., Sun=6
+  leads.forEach(l => {
+    if (l.unlocked) {
+      let dayIndex = 0; // default to Monday for mock data
+      if (l.unlockedAt) {
+        const date = new Date(l.unlockedAt);
+        const day = date.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+        dayIndex = day === 0 ? 6 : day - 1;
+      }
+      if (dayIndex >= 0 && dayIndex < 7) {
+        dailyRevenues[dayIndex] += l.price;
+      }
+    }
+  });
+
+  const maxVal = Math.max(...dailyRevenues, 50); // Scale relative to max daily value (min $50)
+  const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+  days.forEach((day, index) => {
+    const val = dailyRevenues[index];
+    const barEl = document.getElementById(`bar-${day}`);
+    if (barEl) {
+      const heightPercent = (val / maxVal) * 100;
+      // Set height: 0% if $0, min 8% if val > 0 to keep it visible
+      barEl.style.height = `${val === 0 ? 0 : Math.max(heightPercent, 8)}%`;
+      
+      const valSpan = barEl.querySelector('span');
+      if (valSpan) {
+        valSpan.textContent = `$${val.toFixed(0)}`;
+        valSpan.style.display = val === 0 ? "none" : "block";
+      }
+    }
+  });
+
+  const perfLabel = document.getElementById("admin-week-performance-label");
+  if (perfLabel) {
+    perfLabel.textContent = `Week performance: $${totalSpend.toFixed(2)}`;
   }
 }
 
