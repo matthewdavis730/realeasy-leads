@@ -92,15 +92,15 @@
 
         <!-- Role Selectors (Homeowner / Contractor) -->
         <div class="role-selector" id="auth-role-selector">
-          <button class="role-btn active" data-role="contractor">💼 Service Pro</button>
-          <button class="role-btn" data-role="homeowner">🏠 Homeowner</button>
+          <button class="role-btn active" data-role="contractor">Service Pro</button>
+          <button class="role-btn" data-role="homeowner">Homeowner</button>
         </div>
 
         <form id="auth-form" style="display: flex; flex-direction: column; gap: 10px;">
           <!-- Name Field (signup only) -->
           <div class="form-group" id="auth-group-name" style="display: none;">
-            <label for="auth-input-name" style="font-size: 9px;">Business/User Name</label>
-            <input type="text" id="auth-input-name" class="form-input" placeholder="e.g. Apex Plumbing">
+            <label for="auth-input-name" style="font-size: 9px;" id="auth-label-name">Business Name</label>
+            <input type="text" id="auth-input-name" class="form-input" placeholder="e.g. Apex Plumbing & Rooter">
           </div>
 
           <!-- Email Field -->
@@ -113,7 +113,7 @@
           <div class="form-group" id="auth-group-phone" style="display: none;">
             <label for="auth-input-phone" style="font-size: 9px;">Contact Phone</label>
             <div style="display: flex; gap: 8px;">
-              <select id="auth-input-phone-code" class="form-input" style="width: 85px; padding: 10px; font-size: 11px; background: var(--bg-card); border-color: var(--border-card); color: #fff; border-radius: 10px;">
+              <select id="auth-input-phone-code" class="form-input" style="width: 75px;">
                 <option value="+1">🇺🇸 +1</option>
                 <option value="+880">🇧🇩 +880</option>
                 <option value="+44">🇬🇧 +44</option>
@@ -133,7 +133,7 @@
           <!-- Contractor Niche Specialty (contractor signup only) -->
           <div class="form-group" id="auth-group-niche" style="display: none;">
             <label for="auth-input-niche" style="font-size: 9px;">Service Specialty Niche</label>
-            <select id="auth-input-niche" class="form-input form-select" style="background: var(--bg-card); border-color: var(--border-card); color: #fff;">
+            <select id="auth-input-niche" class="form-input form-select">
               <option value="plumbing">Plumbing &amp; Rooter</option>
               <option value="roofing">Roofing &amp; Patching</option>
               <option value="glass">Glass &amp; Windows</option>

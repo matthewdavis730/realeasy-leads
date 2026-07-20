@@ -796,13 +796,41 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
-  border-radius: 28px;
-  padding: 24px 20px;
+  border-radius: 24px;
+  padding: 16px 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
               0 0 20px rgba(99, 102, 241, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
+}
+
+.auth-card .form-input {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.auth-card select.form-input {
+  background-color: #0b1120;
+  color: #fff;
+  border: 1px solid var(--border-card);
+}
+
+.auth-card select.form-input option {
+  background-color: #0b1120;
+  color: #fff;
+}
+
+.auth-card .form-group {
+  margin-bottom: 0px;
+}
+
+.auth-card .form-group label {
+  font-size: 9px !important;
+  margin-bottom: 2px !important;
+  color: var(--text-secondary);
 }
 
 .auth-header {

@@ -514,6 +514,11 @@ function setupAuthListeners() {
   }
 
   function updateAuthFormFields() {
+    const nameLabel = document.getElementById("auth-label-name");
+    const nameInput = document.getElementById("auth-input-name");
+    const cityLabel = document.querySelector("#auth-group-city label");
+    const cityInput = document.getElementById("auth-input-city");
+
     if (authMode === "login") {
       if (nameGroup) nameGroup.style.display = "none";
       if (phoneGroup) phoneGroup.style.display = "none";
@@ -524,10 +529,21 @@ function setupAuthListeners() {
       if (nameGroup) nameGroup.style.display = "block";
       if (phoneGroup) phoneGroup.style.display = "block";
       if (cityGroup) cityGroup.style.display = "block";
+      
       if (selectedRole === "contractor") {
+        if (nameLabel) nameLabel.textContent = "Business Name";
+        if (nameInput) nameInput.placeholder = "e.g. Apex Plumbing & Rooter";
+        if (cityLabel) cityLabel.textContent = "Primary Coverage City";
+        if (cityInput) cityInput.placeholder = "e.g. Newark, CA";
+
         if (nicheGroup) nicheGroup.style.display = "block";
         if (licenseGroup) licenseGroup.style.display = "block";
       } else {
+        if (nameLabel) nameLabel.textContent = "Your Full Name";
+        if (nameInput) nameInput.placeholder = "e.g. David Vance";
+        if (cityLabel) cityLabel.textContent = "Property City";
+        if (cityInput) cityInput.placeholder = "e.g. Las Vegas, NV";
+
         if (nicheGroup) nicheGroup.style.display = "none";
         if (licenseGroup) licenseGroup.style.display = "none";
       }
