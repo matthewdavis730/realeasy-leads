@@ -26,7 +26,7 @@
       errDiv.style.whiteSpace = "pre-wrap";
       errDiv.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
       errDiv.style.border = "1px solid rgba(255,255,255,0.2)";
-      errDiv.innerHTML = `<strong>JS Error:</strong> \${message}<br><br><strong>Source:</strong> \${source.split('/').pop()}:\${lineno}:\${colno}`;
+      errDiv.innerHTML = `<strong>JS Error:</strong> ${message}<br><br><strong>Source:</strong> ${source.split('/').pop()}:${lineno}:${colno}`;
       document.body.appendChild(errDiv);
       return false;
     };
@@ -46,7 +46,7 @@
       errDiv.style.whiteSpace = "pre-wrap";
       errDiv.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
       errDiv.style.border = "1px solid rgba(255,255,255,0.2)";
-      errDiv.innerHTML = `<strong>Promise Reject:</strong> \${event.reason}`;
+      errDiv.innerHTML = `<strong>Promise Reject:</strong> ${event.reason}`;
       document.body.appendChild(errDiv);
     });
   </script>

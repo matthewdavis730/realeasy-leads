@@ -332,6 +332,16 @@ function fetchDisputes() {
     });
 }
 
+// FETCH CALL HISTORY LOGS
+function fetchCallLogs() {
+  return fetch('/api/calls')
+    .then(res => res.json())
+    .then(data => {
+      callLogs = data;
+      renderCallLogs();
+    });
+}
+
 // INITIALIZE APPLICATION
 function initApp() {
   initTime();
