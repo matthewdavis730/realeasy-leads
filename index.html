@@ -775,8 +775,17 @@
           </div>
         </div>
 
+      </section>
+
+      <!-- SCREEN 8: ADMIN SETTINGS & CONFIG -->
+      <section class="app-screen" id="screen-admin-settings" style="padding-bottom: 80px; display: none;">
+        <div class="section-header">
+          <h2>Admin Settings</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: -2px;">Global platform configuration</p>
+        </div>
+
         <!-- Post Lead Form (Collapsible) -->
-        <details class="lead-card" style="border: 1px dashed rgba(255,255,255,0.08); background: rgba(0,0,0,0.15);" open>
+        <details class="lead-card" style="border: 1px dashed rgba(255,255,255,0.08); background: rgba(0,0,0,0.15); margin-top: 15px;" open>
           <summary style="font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-primary); user-select: none;">
             🔧 Post a New Test Lead
           </summary>
@@ -860,6 +869,19 @@
             </button>
           </div>
         </details>
+
+        <!-- Reset Mockup Button (Admin-Only) -->
+        <div style="margin-top: 20px; padding: 0 5px;">
+          <button class="btn btn-secondary" id="admin-reset-btn" style="font-size: 11px; padding: 10px 0; border-radius: 12px; width: 100%; border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; background: rgba(239, 68, 68, 0.03);">
+            ⚠️ Reset Mockup to Defaults
+          </button>
+        </div>
+
+        <div style="margin-top: 15px; padding: 0 5px;">
+          <button id="admin-logout-btn" class="btn btn-secondary" style="font-size: 11px; padding: 10px 0; border-radius: 12px; width: 100%; border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; background: rgba(239, 68, 68, 0.03);">
+            🚪 Log Out of Admin Account
+          </button>
+        </div>
       </section>
 
     </main>
@@ -1014,6 +1036,15 @@
           <line x1="6" y1="20" x2="6" y2="14"></line>
         </svg>
         <span>Admin</span>
+      </div>
+
+      <!-- Nav Item 5: Admin Settings -->
+      <div class="nav-item" id="nav-admin-settings" data-screen="screen-admin-settings" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Settings</span>
       </div>
 
       <!-- HOMEOWNER TABS -->

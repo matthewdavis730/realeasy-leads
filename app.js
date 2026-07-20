@@ -865,6 +865,7 @@ function applyRoleLayout(user) {
   const navUnlocked = document.getElementById("nav-unlocked");
   const navProfile = document.getElementById("nav-profile");
   const navAdmin = document.getElementById("nav-admin");
+  const navAdminSettings = document.getElementById("nav-admin-settings");
   
   const navHomeownerDispatch = document.getElementById("nav-homeowner-dispatch");
   const navHomeownerPros = document.getElementById("nav-homeowner-pros");
@@ -888,6 +889,7 @@ function applyRoleLayout(user) {
       if (navUnlocked) navUnlocked.style.display = "none";
       if (navProfile) navProfile.style.display = "none";
       if (navAdmin) navAdmin.style.display = "none";
+      if (navAdminSettings) navAdminSettings.style.display = "none";
       
       if (navHomeownerDispatch) navHomeownerDispatch.style.display = "flex";
       if (navHomeownerPros) navHomeownerPros.style.display = "flex";
@@ -935,8 +937,9 @@ function applyRoleLayout(user) {
       navBar.style.display = "flex";
       if (navMarket) navMarket.style.display = "none";
       if (navUnlocked) navUnlocked.style.display = "none";
-      if (navProfile) navProfile.style.display = "flex";
+      if (navProfile) navProfile.style.display = "none"; // Hide contractor profile tab
       if (navAdmin) navAdmin.style.display = "flex";
+      if (navAdminSettings) navAdminSettings.style.display = "flex"; // Show admin settings tab
       
       if (navHomeownerDispatch) navHomeownerDispatch.style.display = "none";
       if (navHomeownerPros) navHomeownerPros.style.display = "none";
@@ -958,6 +961,7 @@ function applyRoleLayout(user) {
       if (navUnlocked) navUnlocked.style.display = "flex";
       if (navProfile) navProfile.style.display = "flex";
       if (navAdmin) navAdmin.style.display = "none";
+      if (navAdminSettings) navAdminSettings.style.display = "none";
       
       if (navHomeownerDispatch) navHomeownerDispatch.style.display = "none";
       if (navHomeownerPros) navHomeownerPros.style.display = "none";
@@ -1019,6 +1023,24 @@ function setupEventListeners() {
     logoutBtn.onclick = () => {
       if (confirm("Are you sure you want to log out of RealEasy Leads?")) {
         handleLogout();
+      }
+    };
+  }
+
+  const adminLogoutBtn = document.getElementById("admin-logout-btn");
+  if (adminLogoutBtn) {
+    adminLogoutBtn.onclick = () => {
+      if (confirm("Are you sure you want to log out of the Admin panel?")) {
+        handleLogout();
+      }
+    };
+  }
+
+  const adminResetBtn = document.getElementById("admin-reset-btn");
+  if (adminResetBtn) {
+    adminResetBtn.onclick = () => {
+      if (confirm("Are you sure you want to reset all mock platform data?")) {
+        resetPlatform();
       }
     };
   }
