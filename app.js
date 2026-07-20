@@ -400,12 +400,25 @@ function initApp() {
       fetchPricingRules(),
       fetchAiInstructions()
     ]).then(() => {
+      const loader = document.getElementById("admin-loading-state");
+      const content = document.getElementById("admin-dashboard-content");
+      if (loader) loader.style.display = "none";
+      if (content) content.style.display = "block";
+
       setupEventListeners();
       setupPricingRulesListeners();
       setupAiInstructionsListeners();
       setupAiCallSimulator();
     }).catch(err => {
       console.error("Admin data load failed:", err);
+      const loader = document.getElementById("admin-loading-state");
+      if (loader) {
+        loader.innerHTML = `
+          <div style="text-align: center; color: var(--error); font-size: 11px; font-weight: 700;">
+            ⚠️ Failed to load Admin Console. Please refresh the page.
+          </div>
+        `;
+      }
       setupEventListeners();
       setupAiCallSimulator();
     });
