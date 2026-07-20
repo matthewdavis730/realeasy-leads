@@ -164,6 +164,16 @@ function applyProfileData(data) {
   document.getElementById("profile-display-phone").textContent = data.phone || "Not set";
   document.getElementById("profile-display-email").textContent = data.email || "Not set";
   
+  const nicheBadge = document.getElementById("profile-display-niche");
+  if (nicheBadge && data.niche) {
+    nicheBadge.textContent = data.niche.toUpperCase();
+    nicheBadge.className = `lead-badge badge-${data.niche}`;
+  }
+  const cityEl = document.getElementById("profile-display-city");
+  if (cityEl) {
+    cityEl.textContent = data.city || "Not set";
+  }
+  
   // Update Avatar
   const avatarEl = document.getElementById("profile-avatar");
   const editPreviewEl = document.getElementById("profile-edit-avatar-preview");
@@ -1047,6 +1057,14 @@ function setupEventListeners() {
     editBtn.addEventListener("click", () => {
       displayCard.style.display = "none";
       editForm.style.display = "block";
+      
+      document.getElementById("profile-input-name").value = currentUser.name || "";
+      document.getElementById("profile-input-license").value = currentUser.license || "";
+      document.getElementById("profile-input-phone").value = currentUser.phone || "";
+      document.getElementById("profile-input-email").value = currentUser.email || "";
+      document.getElementById("profile-input-desc").value = currentUser.description || "";
+      document.getElementById("profile-input-niche").value = currentUser.niche || "plumbing";
+      document.getElementById("profile-input-city").value = currentUser.city || "";
     });
   }
 
@@ -1080,13 +1098,15 @@ function setupEventListeners() {
       const phone = document.getElementById("profile-input-phone").value.trim();
       const email = document.getElementById("profile-input-email").value.trim();
       const description = document.getElementById("profile-input-desc").value.trim();
+      const niche = document.getElementById("profile-input-niche").value;
+      const city = document.getElementById("profile-input-city").value.trim();
 
       if (!name || !license) {
         alert("Name and License fields are required.");
         return;
       }
 
-      const updateData = { name, license, phone, email, description, avatarImage: uploadedAvatarBase64 };
+      const updateData = { name, license, phone, email, description, niche, city, avatarImage: uploadedAvatarBase64 };
 
       fetch('/api/profile/update', {
         method: 'POST',
@@ -1203,6 +1223,10 @@ function setupEventListeners() {
         pill.style.background = "rgba(99, 102, 241, 0.12)";
         pill.style.color = "var(--primary)";
         pill.style.borderColor = "rgba(99, 102, 241, 0.3)";
+      } else if (currentNicheFilter === "glass") {
+        pill.style.background = "rgba(245, 158, 11, 0.12)";
+        pill.style.color = "#f59e0b";
+        pill.style.borderColor = "rgba(245, 158, 11, 0.3)";
       }
 
       renderLeads();
@@ -1480,7 +1504,7 @@ function renderLeads() {
       card.className = "lead-card";
       card.innerHTML = `
         <div class="lead-top">
-          <span class="lead-badge badge-${lead.niche}">${lead.niche === 'plumbing' ? 'Plumbing' : 'Roofing'}</span>
+          <span class="lead-badge badge-${lead.niche}">${lead.niche ? lead.niche.charAt(0).toUpperCase() + lead.niche.slice(1) : 'Service'}</span>
           <div style="display: flex; align-items: center; gap: 6px;">
             <span style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Status:</span>
             <select onchange="updateLeadStatus('${lead.id}', this.value)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-card); border-radius: 6px; font-size: 9px; padding: 2px 4px; color: var(--text-primary); font-weight: 700; cursor: pointer;">
@@ -1539,7 +1563,7 @@ function renderLeads() {
         card.className = "lead-card";
         card.innerHTML = `
           <div class="lead-top">
-            <span class="lead-badge badge-${lead.niche}">${lead.niche === 'plumbing' ? 'Plumbing' : 'Roofing'}</span>
+            <span class="lead-badge badge-${lead.niche}">${lead.niche ? lead.niche.charAt(0).toUpperCase() + lead.niche.slice(1) : 'Service'}</span>
             <span class="lead-price">$${lead.price.toFixed(2)}</span>
           </div>
           <h3 class="lead-title">${lead.title}</h3>
@@ -1792,6 +1816,13 @@ const customerRecordings = {
     "It's pouring rain and water is getting onto our electronics and packaging equipment.",
     "I need a commercial roofer to apply patches and reflective coating right away before we lose inventory.",
     "How quickly can you dispatch a crew here? Please let me know."
+  ],
+  glass: [
+    "Hello? Yes! Thanks for calling. We have an emergency at our shop.",
+    "A runaway shopping cart crashed right through our front display window this morning.",
+    "Now there is shattered glass all over the sidewalk, and the storefront is completely open to the wind.",
+    "We need someone to come out immediately for emergency board-up and to measure for a replacement tempered pane.",
+    "Are you able to get a technician here today? We can't close up the shop like this."
   ]
 };
 

@@ -334,7 +334,7 @@ app.post('/api/profile/update', (req, res) => {
   const user = getRequestUser(req, db);
   if (!user) return res.status(404).json({ error: "User not found." });
 
-  const { activeCitiesFilter, smsAlerts, emailReports, name, license, description, phone, email, verified, avatarImage, verificationStatus, verificationIdDoc, verificationLicenseDoc, verificationRejectionReason, addresses } = req.body;
+  const { activeCitiesFilter, smsAlerts, emailReports, name, license, description, phone, email, verified, avatarImage, verificationStatus, verificationIdDoc, verificationLicenseDoc, verificationRejectionReason, addresses, niche, city } = req.body;
 
   const dbUser = db.users.find(u => u.id === user.id);
 
@@ -353,6 +353,8 @@ app.post('/api/profile/update', (req, res) => {
   if (verificationLicenseDoc !== undefined) dbUser.verificationLicenseDoc = verificationLicenseDoc;
   if (verificationRejectionReason !== undefined) dbUser.verificationRejectionReason = verificationRejectionReason;
   if (addresses !== undefined) dbUser.addresses = addresses;
+  if (niche !== undefined) dbUser.niche = niche;
+  if (city !== undefined) dbUser.city = city;
 
   writeDB(db);
   const { password, ...userWithoutPass } = dbUser;

@@ -349,6 +349,12 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
+.badge-glass {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
 .lead-price {
   font-family: var(--font-display);
   font-size: 18px;
