@@ -382,6 +382,20 @@ function initApp() {
       setupEventListeners();
       setupAiCallSimulator();
     });
+  } else if (user.role === 'homeowner') {
+    // Homeowner Data Loading
+    fetchLeads()
+      .then(() => fetchHomeownerPros())
+      .then(() => {
+        setupHomeownerTickets();
+        setupEventListeners();
+        setupAiCallSimulator();
+      })
+      .catch(err => {
+        console.error("Homeowner data load failed:", err);
+        setupEventListeners();
+        setupAiCallSimulator();
+      });
   } else {
     // Contractor Data Loading
     Promise.all([
@@ -634,6 +648,10 @@ function applyRoleLayout(user) {
   const navUnlocked = document.getElementById("nav-unlocked");
   const navProfile = document.getElementById("nav-profile");
   const navAdmin = document.getElementById("nav-admin");
+  
+  const navHomeownerDispatch = document.getElementById("nav-homeowner-dispatch");
+  const navHomeownerPros = document.getElementById("nav-homeowner-pros");
+  const navHomeownerSettings = document.getElementById("nav-homeowner-settings");
 
   const screens = document.querySelectorAll(".app-screen");
 
@@ -647,10 +665,45 @@ function applyRoleLayout(user) {
   if (user.role === 'homeowner') {
     // Homeowner UI
     if (walletBadge) walletBadge.style.display = "none";
-    if (navBar) navBar.style.display = "none";
+    if (navBar) {
+      navBar.style.display = "flex";
+      if (navMarket) navMarket.style.display = "none";
+      if (navUnlocked) navUnlocked.style.display = "none";
+      if (navProfile) navProfile.style.display = "none";
+      if (navAdmin) navAdmin.style.display = "none";
+      
+      if (navHomeownerDispatch) navHomeownerDispatch.style.display = "flex";
+      if (navHomeownerPros) navHomeownerPros.style.display = "flex";
+      if (navHomeownerSettings) navHomeownerSettings.style.display = "flex";
+      
+      document.querySelectorAll(".nav-bar .nav-item").forEach(i => i.classList.remove("active"));
+      if (navHomeownerDispatch) navHomeownerDispatch.classList.add("active");
+    }
     
     const homeownerScreen = document.getElementById("screen-homeowner");
     if (homeownerScreen) homeownerScreen.classList.add("active");
+
+    // Populate homeowner profile settings card
+    const nameEl = document.getElementById("homeowner-display-name");
+    const emailEl = document.getElementById("homeowner-display-email");
+    const phoneEl = document.getElementById("homeowner-display-phone");
+    const cityEl = document.getElementById("homeowner-display-city");
+    const avatarEl = document.getElementById("homeowner-avatar-preview");
+
+    if (nameEl) nameEl.textContent = user.name;
+    if (emailEl) emailEl.textContent = user.email;
+    if (phoneEl) phoneEl.textContent = user.phone || "Not set";
+    if (cityEl) cityEl.textContent = user.city || "Not set";
+    if (avatarEl && user.name) {
+      avatarEl.textContent = user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    const homeownerLogoutBtn = document.getElementById("homeowner-logout-btn");
+    if (homeownerLogoutBtn) {
+      homeownerLogoutBtn.onclick = () => {
+        handleLogout();
+      };
+    }
   } else if (user.role === 'admin') {
     // Admin UI (Keith)
     if (walletBadge) walletBadge.style.display = "none";
@@ -660,6 +713,10 @@ function applyRoleLayout(user) {
       if (navUnlocked) navUnlocked.style.display = "none";
       if (navProfile) navProfile.style.display = "flex";
       if (navAdmin) navAdmin.style.display = "flex";
+      
+      if (navHomeownerDispatch) navHomeownerDispatch.style.display = "none";
+      if (navHomeownerPros) navHomeownerPros.style.display = "none";
+      if (navHomeownerSettings) navHomeownerSettings.style.display = "none";
     }
 
     const adminScreen = document.getElementById("screen-admin");
@@ -677,6 +734,10 @@ function applyRoleLayout(user) {
       if (navUnlocked) navUnlocked.style.display = "flex";
       if (navProfile) navProfile.style.display = "flex";
       if (navAdmin) navAdmin.style.display = "none";
+      
+      if (navHomeownerDispatch) navHomeownerDispatch.style.display = "none";
+      if (navHomeownerPros) navHomeownerPros.style.display = "none";
+      if (navHomeownerSettings) navHomeownerSettings.style.display = "none";
     }
 
     const marketScreen = document.getElementById("screen-marketplace");
@@ -2460,6 +2521,66 @@ window.resolveComplianceVerify = function(action, contractorId) {
     triggerDynamicIslandNotification(`Compliance audit ${action}d locally!`);
   });
 };
+
+// FETCH PUBLIC PROS DIRECTORY FOR HOMEOWNER
+function fetchHomeownerPros() {
+  const container = document.getElementById("homeowner-pros-list");
+  if (!container) return Promise.resolve();
+
+  return fetch('/api/contractors/public')
+    .then(res => res.json())
+    .then(pros => {
+      if (pros.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 11px; border: 1px dashed var(--border-card); border-radius: 12px;">
+            No service professionals found in your area.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = pros.map(pro => {
+        const initial = pro.name ? pro.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "P";
+        const isVerified = pro.verified;
+        const verifiedBadge = isVerified 
+          ? `<span style="font-size: 8px; font-weight: 700; color: var(--success); background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 8px; display: inline-flex; align-items: center; gap: 3px;">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg> Verified Pro
+             </span>`
+          : `<span style="font-size: 8px; font-weight: 700; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 8px;">Registered</span>`;
+
+        return `
+          <div class="lead-card" style="margin: 0; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 38px; height: 38px; background: linear-gradient(135deg, var(--primary), #818cf8); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 13px; color: white;">
+                ${initial}
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <h4 style="font-size: 13px; font-weight: 800; color: var(--text-primary); margin: 0;">${pro.name}</h4>
+                  ${verifiedBadge}
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+                  <span class="lead-badge badge-${pro.niche}" style="font-size: 8px; padding: 1px 5px;">${pro.niche.toUpperCase()}</span>
+                  <span style="font-size: 10px; color: var(--text-muted);">Serving <strong>${pro.city}</strong></span>
+                </div>
+              </div>
+            </div>
+            <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin: 0; font-style: italic;">
+              "${pro.description}"
+            </p>
+          </div>
+        `;
+      }).join("");
+    })
+    .catch(err => {
+      console.error("Failed to load contractor directory:", err);
+      container.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 11px;">
+          Failed to load local contractor directory.
+        </div>
+      `;
+    });
+}
 
 // ==========================================================================
 // 🏠 HOMEOWNER SERVICE TICKETS SYSTEM

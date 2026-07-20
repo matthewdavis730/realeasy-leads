@@ -365,6 +365,55 @@
         </div>
       </section>
 
+      <!-- SCREEN 6: HOMEOWNER PRO DIRECTORY -->
+      <section class="app-screen" id="screen-homeowner-pros" style="padding-bottom: 80px;">
+        <div class="section-header">
+          <h2>Local Professionals</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: -2px;">Available contractors in your area</p>
+        </div>
+        
+        <div id="homeowner-pros-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </section>
+
+      <!-- SCREEN 7: HOMEOWNER PROFILE & SETTINGS -->
+      <section class="app-screen" id="screen-homeowner-settings" style="padding-bottom: 80px;">
+        <div class="section-header">
+          <h2>Homeowner Settings</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: -2px;">Manage your customer profile</p>
+        </div>
+
+        <!-- Homeowner Profile details card -->
+        <div class="lead-card" style="padding: 20px 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="homeowner-avatar-preview" style="width: 48px; height: 48px; background: linear-gradient(135deg, #38bdf8, #6366f1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 16px; color: white;">
+              HO
+            </div>
+            <div>
+              <h3 id="homeowner-display-name" style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0;">David Vance</h3>
+              <span style="font-size: 8px; font-weight: 700; color: #38bdf8; background: rgba(56,189,248,0.1); padding: 2px 6px; border-radius: 8px;">🏠 Homeowner Account</span>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid rgba(255,255,255,0.03); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+            <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+              <span>Email:</span> <span id="homeowner-display-email" style="color: var(--text-primary); font-weight: 600;">homeowner@example.com</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+              <span>Phone:</span> <span id="homeowner-display-phone" style="color: var(--text-primary); font-weight: 600;">+1 510-555-0811</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+              <span>Property City:</span> <span id="homeowner-display-city" style="color: var(--text-primary); font-weight: 600;">Newark, CA</span>
+            </div>
+          </div>
+
+          <button id="homeowner-logout-btn" class="btn btn-secondary" style="font-size: 11px; padding: 10px 0; border-radius: 12px; width: 100%; margin-top: 10px; border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; background: rgba(239, 68, 68, 0.03);">
+            🚪 Log Out of Account
+          </button>
+        </div>
+      </section>
+
       <!-- SCREEN 3: CONTRACTOR PROFILE & SETTINGS -->
       <section class="app-screen" id="screen-profile" style="padding-bottom: 80px;">
         <div class="section-header" style="margin-bottom: 20px;">
@@ -877,6 +926,32 @@
           <line x1="6" y1="20" x2="6" y2="14"></line>
         </svg>
         <span>Admin</span>
+      </div>
+
+      <!-- HOMEOWNER TABS -->
+      <div class="nav-item" id="nav-homeowner-dispatch" data-screen="screen-homeowner" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>
+        </svg>
+        <span>Dispatch</span>
+      </div>
+      
+      <div class="nav-item" id="nav-homeowner-pros" data-screen="screen-homeowner-pros" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+        <span>Local Pros</span>
+      </div>
+
+      <div class="nav-item" id="nav-homeowner-settings" data-screen="screen-homeowner-settings" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="4" />
+          <path d="M12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
+        </svg>
+        <span>Settings</span>
       </div>
     </nav>
 

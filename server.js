@@ -808,6 +808,25 @@ app.post('/api/platform/reset', (req, res) => {
   res.json({ success: true, profile: defaultUsers[1] }); // Return apex contractor as reset fallback
 });
 
+// ==========================================================================
+// 🛡️ API ROUTE: SAFE PUBLIC DIRECTORY FOR HOMEOWNERS
+// ==========================================================================
+app.get('/api/contractors/public', (req, res) => {
+  const db = readDB();
+  const contractors = db.users
+    .filter(u => u.role === 'contractor' && !u.suspended)
+    .map(u => ({
+      id: u.id,
+      name: u.name,
+      niche: u.niche || 'plumbing',
+      city: u.city || 'Newark, CA',
+      verified: u.verified || false,
+      avatarImage: u.avatarImage || '',
+      description: u.description || `${u.name} is a local home service professional.`
+    }));
+  res.json(contractors);
+});
+
 // Serve frontend assets
 // ==========================================================================
 // 🛡️ API ROUTE: ADMIN GET ALL CONTRACTORS (For Keith's backoffice auditing)
