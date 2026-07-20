@@ -1,22 +1,49 @@
 {
-  "profile": {
-    "name": "Apex Plumbing & Rooter",
-    "license": "CSLB #1094851",
-    "walletBalance": 650,
-    "activeCitiesFilter": [
-      "newark",
-      "las vegas"
-    ],
-    "smsAlerts": true,
-    "emailReports": true,
-    "description": "Apex Plumbing & Rooter has been providing premium commercial and residential drain cleaning, pipe replacements, and emergency plumbing services in the Bay Area and Las Vegas since 2012.",
-    "phone": "(510) 555-9000",
-    "email": "contact@apexplumbing.com",
-    "verified": false
-  },
+  "users": [
+    {
+      "id": "usr-keith",
+      "email": "keith@whatsrealeasy.com",
+      "password": "admin",
+      "role": "admin",
+      "name": "Keith Thunds",
+      "phone": "(866) 921-8235"
+    },
+    {
+      "id": "usr-apex",
+      "email": "apex@example.com",
+      "password": "password",
+      "role": "contractor",
+      "name": "Apex Plumbing & Rooter",
+      "license": "CSLB #1094851",
+      "walletBalance": 650,
+      "activeCitiesFilter": [
+        "newark",
+        "las vegas"
+      ],
+      "smsAlerts": true,
+      "emailReports": true,
+      "description": "Apex Plumbing & Rooter has been providing premium commercial and residential drain cleaning, pipe replacements, and emergency plumbing services in the Bay Area and Las Vegas since 2012.",
+      "phone": "(510) 555-9000",
+      "verified": false,
+      "verificationStatus": "unverified",
+      "verificationIdDoc": "",
+      "verificationLicenseDoc": "",
+      "verificationRejectionReason": "",
+      "avatarImage": ""
+    },
+    {
+      "id": "usr-homeowner",
+      "email": "homeowner@example.com",
+      "password": "password",
+      "role": "homeowner",
+      "name": "David Vance",
+      "phone": "(510) 555-0811"
+    }
+  ],
   "leads": [
     {
       "id": "lead-1784498870112",
+      "customerId": "usr-homeowner",
       "niche": "plumbing",
       "title": "Emergency Gas Water Heater Leak",
       "city": "Newark, CA",
@@ -24,7 +51,6 @@
       "price": 30,
       "customerName": "David Vance",
       "customerPhone": "(510) 555-0811",
-      "unlocked": false,
       "date": "Just now",
       "status": "unlocked",
       "jobRevenue": 0,
@@ -33,6 +59,7 @@
     },
     {
       "id": "lead-1",
+      "customerId": "usr-homeowner",
       "niche": "plumbing",
       "title": "Whole Home PEX Repiping",
       "city": "Newark, CA",
@@ -40,7 +67,6 @@
       "price": 35,
       "customerName": "James Miller",
       "customerPhone": "(510) 555-0143",
-      "unlocked": false,
       "date": "10 mins ago",
       "status": "unlocked",
       "jobRevenue": 0,
@@ -49,6 +75,7 @@
     },
     {
       "id": "lead-2",
+      "customerId": "usr-homeowner",
       "niche": "roofing",
       "title": "Commercial Flat Roof Patch & Seal",
       "city": "Las Vegas, NV",
@@ -56,7 +83,6 @@
       "price": 45,
       "customerName": "Sarah Jenkins (Vegas Logistics)",
       "customerPhone": "(702) 608-4491",
-      "unlocked": false,
       "date": "2 hours ago",
       "status": "unlocked",
       "jobRevenue": 0,
@@ -65,6 +91,7 @@
     },
     {
       "id": "lead-3",
+      "customerId": "usr-homeowner",
       "niche": "plumbing",
       "title": "Gas Water Heater Leak & Replacement",
       "city": "Newark, CA",
@@ -72,7 +99,6 @@
       "price": 25,
       "customerName": "Robert Chen",
       "customerPhone": "(510) 555-0988",
-      "unlocked": false,
       "date": "4 hours ago",
       "status": "unlocked",
       "jobRevenue": 0,
@@ -81,6 +107,7 @@
     },
     {
       "id": "lead-4",
+      "customerId": "usr-homeowner",
       "niche": "roofing",
       "title": "Emergency Shingle Roof Repair",
       "city": "San Rafael, CA (Bay Area)",
@@ -88,7 +115,6 @@
       "price": 30,
       "customerName": "Michael Thompson",
       "customerPhone": "(415) 521-8977",
-      "unlocked": false,
       "date": "1 day ago",
       "status": "unlocked",
       "jobRevenue": 0,
@@ -96,14 +122,43 @@
       "disputeReason": ""
     }
   ],
+  "unlocks": [
+    {
+      "leadId": "lead-1784498870112",
+      "contractorId": "usr-apex",
+      "unlockedAt": "2026-07-20T11:45:00Z"
+    },
+    {
+      "leadId": "lead-1",
+      "contractorId": "usr-apex",
+      "unlockedAt": "2026-07-20T11:46:00Z"
+    },
+    {
+      "leadId": "lead-2",
+      "contractorId": "usr-apex",
+      "unlockedAt": "2026-07-20T11:47:00Z"
+    },
+    {
+      "leadId": "lead-3",
+      "contractorId": "usr-apex",
+      "unlockedAt": "2026-07-20T11:48:00Z"
+    },
+    {
+      "leadId": "lead-4",
+      "contractorId": "usr-apex",
+      "unlockedAt": "2026-07-20T11:49:00Z"
+    }
+  ],
   "transactions": [
     {
+      "userId": "usr-apex",
       "type": "deposit",
       "amount": 500,
       "title": "Stripe Mock Deposit",
       "date": "04:09 AM, Jul 20"
     },
     {
+      "userId": "usr-apex",
       "type": "deposit",
       "amount": 150,
       "title": "Initial Platform Credit",

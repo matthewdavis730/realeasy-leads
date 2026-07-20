@@ -12,27 +12,66 @@ const DB_PATH = path.join(__dirname, 'db.json');
 app.use(cors());
 app.use(express.json());
 
-// INITIAL DEFAULT DATA (Directly matching whatsrealeasy's actual niches)
-const defaultProfile = {
-  name: "Apex Plumbing & Rooter",
-  license: "CSLB #1094851",
-  walletBalance: 150.00,
-  activeCitiesFilter: ["newark", "las vegas"],
-  smsAlerts: true,
-  emailReports: false,
-  description: "Apex Plumbing & Rooter has been providing premium commercial and residential drain cleaning, pipe replacements, and emergency plumbing services in the Bay Area and Las Vegas since 2012.",
-  phone: "(510) 555-9000",
-  email: "contact@apexplumbing.com",
-  verified: false,
-  verificationStatus: "unverified",
-  verificationIdDoc: "",
-  verificationLicenseDoc: "",
-  verificationRejectionReason: ""
-};
+// INITIAL DEFAULT SYSTEM USERS & ROLES
+const defaultUsers = [
+  {
+    id: "usr-keith",
+    email: "keith@whatsrealeasy.com",
+    password: "admin",
+    role: "admin",
+    name: "Keith Thunds",
+    phone: "(866) 921-8235"
+  },
+  {
+    id: "usr-apex",
+    email: "apex@example.com",
+    password: "password",
+    role: "contractor",
+    name: "Apex Plumbing & Rooter",
+    license: "CSLB #1094851",
+    walletBalance: 650.00,
+    activeCitiesFilter: ["newark", "las vegas"],
+    smsAlerts: true,
+    emailReports: true,
+    description: "Apex Plumbing & Rooter has been providing premium commercial and residential drain cleaning, pipe replacements, and emergency plumbing services in the Bay Area and Las Vegas since 2012.",
+    phone: "(510) 555-9000",
+    verified: false,
+    verificationStatus: "unverified",
+    verificationIdDoc: "",
+    verificationLicenseDoc: "",
+    verificationRejectionReason: "",
+    avatarImage: ""
+  },
+  {
+    id: "usr-homeowner",
+    email: "homeowner@example.com",
+    password: "password",
+    role: "homeowner",
+    name: "David Vance",
+    phone: "(510) 555-0811"
+  }
+];
 
 const defaultLeads = [
   {
+    id: "lead-1784498870112",
+    customerId: "usr-homeowner",
+    niche: "plumbing",
+    title: "Emergency Gas Water Heater Leak",
+    city: "Newark, CA",
+    description: "Emergency gas water heater tank is leaking. Basement floor has water pooling. Customer needs a plumber out immediately.",
+    price: 30.00,
+    customerName: "David Vance",
+    customerPhone: "(510) 555-0811",
+    date: "Just now",
+    status: "unlocked",
+    jobRevenue: 0,
+    disputed: false,
+    disputeReason: ""
+  },
+  {
     id: "lead-1",
+    customerId: "usr-homeowner",
     niche: "plumbing",
     title: "Whole Home PEX Repiping",
     city: "Newark, CA",
@@ -40,15 +79,15 @@ const defaultLeads = [
     price: 35.00,
     customerName: "James Miller",
     customerPhone: "(510) 555-0143",
-    unlocked: false,
     date: "10 mins ago",
-    status: "unlocked", // default progress status
+    status: "unlocked",
     jobRevenue: 0,
     disputed: false,
     disputeReason: ""
   },
   {
     id: "lead-2",
+    customerId: "usr-homeowner",
     niche: "roofing",
     title: "Commercial Flat Roof Patch & Seal",
     city: "Las Vegas, NV",
@@ -56,7 +95,6 @@ const defaultLeads = [
     price: 45.00,
     customerName: "Sarah Jenkins (Vegas Logistics)",
     customerPhone: "(702) 608-4491",
-    unlocked: false,
     date: "2 hours ago",
     status: "unlocked",
     jobRevenue: 0,
@@ -65,6 +103,7 @@ const defaultLeads = [
   },
   {
     id: "lead-3",
+    customerId: "usr-homeowner",
     niche: "plumbing",
     title: "Gas Water Heater Leak & Replacement",
     city: "Newark, CA",
@@ -72,7 +111,6 @@ const defaultLeads = [
     price: 25.00,
     customerName: "Robert Chen",
     customerPhone: "(510) 555-0988",
-    unlocked: false,
     date: "4 hours ago",
     status: "unlocked",
     jobRevenue: 0,
@@ -81,6 +119,7 @@ const defaultLeads = [
   },
   {
     id: "lead-4",
+    customerId: "usr-homeowner",
     niche: "roofing",
     title: "Emergency Shingle Roof Repair",
     city: "San Rafael, CA (Bay Area)",
@@ -88,7 +127,6 @@ const defaultLeads = [
     price: 30.00,
     customerName: "Michael Thompson",
     customerPhone: "(415) 521-8977",
-    unlocked: false,
     date: "1 day ago",
     status: "unlocked",
     jobRevenue: 0,
@@ -97,41 +135,86 @@ const defaultLeads = [
   }
 ];
 
-const defaultTransactions = [
-  { type: "deposit", amount: 150.00, title: "Initial Platform Credit", date: "Joined Platform" }
+const defaultUnlocks = [
+  { leadId: "lead-1784498870112", contractorId: "usr-apex", unlockedAt: "2026-07-20T11:45:00Z" },
+  { leadId: "lead-1", contractorId: "usr-apex", unlockedAt: "2026-07-20T11:46:00Z" },
+  { leadId: "lead-2", contractorId: "usr-apex", unlockedAt: "2026-07-20T11:47:00Z" },
+  { leadId: "lead-3", contractorId: "usr-apex", unlockedAt: "2026-07-20T11:48:00Z" },
+  { leadId: "lead-4", contractorId: "usr-apex", unlockedAt: "2026-07-20T11:49:00Z" }
 ];
 
-// Helper to read database state
+const defaultTransactions = [
+  { userId: "usr-apex", type: "deposit", amount: 500.00, title: "Stripe Mock Deposit", date: "04:09 AM, Jul 20" },
+  { userId: "usr-apex", type: "deposit", amount: 150.00, title: "Initial Platform Credit", date: "Joined Platform" }
+];
+
+// Helper to read database state with defensive migrations
 function readDB() {
   try {
     if (!fs.existsSync(DB_PATH)) {
-      const db = { profile: defaultProfile, leads: defaultLeads, transactions: defaultTransactions, disputes: [], callLogs: [] };
+      const db = {
+        users: defaultUsers,
+        leads: defaultLeads,
+        unlocks: defaultUnlocks,
+        transactions: defaultTransactions,
+        disputes: [],
+        callLogs: []
+      };
       fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
       return db;
     }
     const raw = fs.readFileSync(DB_PATH, 'utf8');
     const db = JSON.parse(raw);
     
-    // Ensure nested fields are initialized defensively for backward compatibility
+    // Perform migrations if database is older schema
+    if (!db.users) {
+      db.users = defaultUsers;
+      if (db.profile) {
+        // Migrate old contractor profile
+        const apexIdx = db.users.findIndex(u => u.id === 'usr-apex');
+        if (apexIdx !== -1) {
+          db.users[apexIdx] = { ...db.users[apexIdx], ...db.profile };
+        }
+        delete db.profile;
+      }
+    }
+    if (!db.unlocks) {
+      db.unlocks = [];
+      // If leads were marked unlocked in old schema, populate unlocks
+      db.leads.forEach(l => {
+        if (l.unlocked) {
+          db.unlocks.push({ leadId: l.id, contractorId: 'usr-apex', unlockedAt: new Date().toISOString() });
+        }
+      });
+    }
+    if (!db.transactions) db.transactions = [];
     if (!db.disputes) db.disputes = [];
     if (!db.callLogs) db.callLogs = [];
-    if (db.profile && db.profile.verified === undefined) {
-      db.profile.verified = false;
-      db.profile.description = defaultProfile.description;
-      db.profile.phone = defaultProfile.phone;
-      db.profile.email = defaultProfile.email;
-    }
-    db.leads.forEach(l => {
-      if (l.status === undefined) l.status = "unlocked";
-      if (l.jobRevenue === undefined) l.jobRevenue = 0;
-      if (l.disputed === undefined) l.disputed = false;
-      if (l.disputeReason === undefined) l.disputeReason = "";
-    });
     
+    // Check that each transaction has a userId
+    db.transactions.forEach(tx => {
+      if (!tx.userId) tx.userId = 'usr-apex';
+    });
+    // Check that each dispute has a userId
+    db.disputes.forEach(d => {
+      if (!d.userId) d.userId = 'usr-apex';
+    });
+    // Check that each callLog has a userId
+    db.callLogs.forEach(c => {
+      if (!c.userId) c.userId = 'usr-apex';
+    });
+
     return db;
   } catch (e) {
     console.error("Error reading database file, returning defaults:", e);
-    return { profile: defaultProfile, leads: defaultLeads, transactions: defaultTransactions, disputes: [], callLogs: [] };
+    return {
+      users: defaultUsers,
+      leads: defaultLeads,
+      unlocks: defaultUnlocks,
+      transactions: defaultTransactions,
+      disputes: [],
+      callLogs: []
+    };
   }
 }
 
@@ -144,102 +227,224 @@ function writeDB(data) {
   }
 }
 
+// Middleware or helper to get requesting user context
+function getRequestUser(req, db) {
+  const userId = req.headers['x-user-id'] || 'usr-apex';
+  return db.users.find(u => u.id === userId) || db.users.find(u => u.role === 'contractor');
+}
+
 // ==========================================================================
-// 🛡️ API ROUTE: CONTRACTOR PROFILE & WALLET STATUS
+// 🛡️ API ROUTES: SIGNUP & LOGIN Gateways
+// ==========================================================================
+app.post('/api/auth/signup', (req, res) => {
+  const db = readDB();
+  const { name, email, password, role, license, phone } = req.body;
+
+  if (!email || !password || !role || !name) {
+    return res.status(400).json({ error: "Missing required registration parameters." });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const userExists = db.users.some(u => u.email === normalizedEmail);
+  if (userExists) {
+    return res.status(400).json({ error: "An account with this email address already exists." });
+  }
+
+  const newUser = {
+    id: "usr-" + Date.now(),
+    email: normalizedEmail,
+    password,
+    role,
+    name,
+    phone: phone || ""
+  };
+
+  if (role === 'contractor') {
+    newUser.license = license || "CSLB Pending";
+    newUser.walletBalance = 150.00;
+    newUser.activeCitiesFilter = ["newark", "las vegas"];
+    newUser.smsAlerts = true;
+    newUser.emailReports = false;
+    newUser.verified = false;
+    newUser.verificationStatus = "unverified";
+    newUser.verificationIdDoc = "";
+    newUser.verificationLicenseDoc = "";
+    newUser.verificationRejectionReason = "";
+    newUser.avatarImage = "";
+    newUser.description = `${name} is a professional contractor service.`;
+
+    // Log initial deposit
+    db.transactions.unshift({
+      userId: newUser.id,
+      type: "deposit",
+      amount: 150.00,
+      title: "Initial Platform Credit",
+      date: "Joined Platform"
+    });
+  }
+
+  db.users.push(newUser);
+  writeDB(db);
+
+  // Strip password in response
+  const { password: _, ...userWithoutPass } = newUser;
+  res.json({ success: true, user: userWithoutPass });
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const db = readDB();
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required." });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = db.users.find(u => u.email === normalizedEmail && u.password === password);
+
+  if (!user) {
+    return res.status(401).json({ error: "Invalid email or password credentials." });
+  }
+
+  const { password: _, ...userWithoutPass } = user;
+  res.json({ success: true, user: userWithoutPass });
+});
+
+// ==========================================================================
+// 🛡️ API ROUTE: PROFILE & STATUS
 // ==========================================================================
 app.get('/api/profile', (req, res) => {
   const db = readDB();
-  res.json(db.profile);
+  const user = getRequestUser(req, db);
+  if (!user) return res.status(404).json({ error: "User not found." });
+  
+  const { password, ...userWithoutPass } = user;
+  res.json(userWithoutPass);
 });
 
 app.post('/api/profile/update', (req, res) => {
   const db = readDB();
+  const user = getRequestUser(req, db);
+  if (!user) return res.status(404).json({ error: "User not found." });
+
   const { activeCitiesFilter, smsAlerts, emailReports, name, license, description, phone, email, verified, avatarImage, verificationStatus, verificationIdDoc, verificationLicenseDoc, verificationRejectionReason } = req.body;
 
-  if (activeCitiesFilter !== undefined) db.profile.activeCitiesFilter = activeCitiesFilter;
-  if (smsAlerts !== undefined) db.profile.smsAlerts = smsAlerts;
-  if (emailReports !== undefined) db.profile.emailReports = emailReports;
-  if (name !== undefined) db.profile.name = name;
-  if (license !== undefined) db.profile.license = license;
-  if (description !== undefined) db.profile.description = description;
-  if (phone !== undefined) db.profile.phone = phone;
-  if (email !== undefined) db.profile.email = email;
-  if (verified !== undefined) db.profile.verified = verified;
-  if (avatarImage !== undefined) db.profile.avatarImage = avatarImage;
-  if (verificationStatus !== undefined) db.profile.verificationStatus = verificationStatus;
-  if (verificationIdDoc !== undefined) db.profile.verificationIdDoc = verificationIdDoc;
-  if (verificationLicenseDoc !== undefined) db.profile.verificationLicenseDoc = verificationLicenseDoc;
-  if (verificationRejectionReason !== undefined) db.profile.verificationRejectionReason = verificationRejectionReason;
+  const dbUser = db.users.find(u => u.id === user.id);
+
+  if (activeCitiesFilter !== undefined) dbUser.activeCitiesFilter = activeCitiesFilter;
+  if (smsAlerts !== undefined) dbUser.smsAlerts = smsAlerts;
+  if (emailReports !== undefined) dbUser.emailReports = emailReports;
+  if (name !== undefined) dbUser.name = name;
+  if (license !== undefined) dbUser.license = license;
+  if (description !== undefined) dbUser.description = description;
+  if (phone !== undefined) dbUser.phone = phone;
+  if (email !== undefined) dbUser.email = email;
+  if (verified !== undefined) dbUser.verified = verified;
+  if (avatarImage !== undefined) dbUser.avatarImage = avatarImage;
+  if (verificationStatus !== undefined) dbUser.verificationStatus = verificationStatus;
+  if (verificationIdDoc !== undefined) dbUser.verificationIdDoc = verificationIdDoc;
+  if (verificationLicenseDoc !== undefined) dbUser.verificationLicenseDoc = verificationLicenseDoc;
+  if (verificationRejectionReason !== undefined) dbUser.verificationRejectionReason = verificationRejectionReason;
 
   writeDB(db);
-  res.json({ success: true, profile: db.profile });
+  const { password, ...userWithoutPass } = dbUser;
+  res.json({ success: true, profile: userWithoutPass });
 });
 
 // Submit Verification Documents
 app.post('/api/profile/verify/submit', (req, res) => {
   const db = readDB();
-  const { idDoc, licenseDoc } = req.body;
+  const user = getRequestUser(req, db);
+  if (!user) return res.status(404).json({ error: "User not found." });
 
+  const { idDoc, licenseDoc } = req.body;
   if (!idDoc || !licenseDoc) {
     return res.status(400).json({ error: "Both State ID and Contractor License copies are required." });
   }
 
-  db.profile.verificationStatus = "pending";
-  db.profile.verificationIdDoc = idDoc;
-  db.profile.verificationLicenseDoc = licenseDoc;
-  db.profile.verificationRejectionReason = "";
+  const dbUser = db.users.find(u => u.id === user.id);
+  dbUser.verificationStatus = "pending";
+  dbUser.verificationIdDoc = idDoc;
+  dbUser.verificationLicenseDoc = licenseDoc;
+  dbUser.verificationRejectionReason = "";
 
   writeDB(db);
-  broadcast({ type: "PROFILE_VERIFICATION_SUBMITTED", profile: db.profile });
-  res.json({ success: true, profile: db.profile });
+  
+  const { password, ...userWithoutPass } = dbUser;
+  broadcast({ type: "PROFILE_VERIFICATION_SUBMITTED", profile: userWithoutPass });
+  res.json({ success: true, profile: userWithoutPass });
 });
 
-// Resolve Verification (Approve / Reject)
+// Resolve Verification (Admin Action)
 app.post('/api/profile/verify/resolve', (req, res) => {
   const db = readDB();
-  const { action, reason } = req.body;
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Unauthorized. Admin permissions required." });
+  }
+
+  const { contractorId, action, reason } = req.body;
+  const targetUser = db.users.find(u => u.id === contractorId);
+  if (!targetUser) {
+    return res.status(404).json({ error: "Contractor not found." });
+  }
 
   if (action === "approve") {
-    db.profile.verified = true;
-    db.profile.verificationStatus = "verified";
-    db.profile.verificationRejectionReason = "";
+    targetUser.verified = true;
+    targetUser.verificationStatus = "verified";
+    targetUser.verificationRejectionReason = "";
   } else if (action === "reject") {
-    db.profile.verified = false;
-    db.profile.verificationStatus = "rejected";
-    db.profile.verificationRejectionReason = reason || "Documents are blurred or invalid.";
+    targetUser.verified = false;
+    targetUser.verificationStatus = "rejected";
+    targetUser.verificationRejectionReason = reason || "Documents are blurred or invalid.";
   } else {
     return res.status(400).json({ error: "Invalid action. Use 'approve' or 'reject'." });
   }
 
   writeDB(db);
-  broadcast({ type: "PROFILE_VERIFICATION_RESOLVED", profile: db.profile });
-  res.json({ success: true, profile: db.profile });
+  const { password, ...userWithoutPass } = targetUser;
+  broadcast({ type: "PROFILE_VERIFICATION_RESOLVED", profile: userWithoutPass });
+  res.json({ success: true, profile: userWithoutPass });
 });
 
 // ==========================================================================
-// 🛡️ API ROUTE: LEADS LISTING (With Secure Server-Side Data Masking!)
+// 🛡️ API ROUTE: LEADS LISTING (Multi-Tenant Secure Server-Side Data Masking)
 // ==========================================================================
 app.get('/api/leads', (req, res) => {
   const db = readDB();
-  
-  // SECURE MASKING: Clone leads and mask sensitive details for locked state checks
+  const user = getRequestUser(req, db);
+
+  // If homeowner, return ONLY leads submitted by them
+  if (user && user.role === 'homeowner') {
+    const homeownerLeads = db.leads.filter(l => l.customerId === user.id);
+    return res.json(homeownerLeads);
+  }
+
+  // If Admin, return all leads with FULL details
+  if (user && user.role === 'admin') {
+    return res.json(db.leads.map(l => ({ ...l, unlocked: true })));
+  }
+
+  // If Contractor, apply Pay-To-Unlock security rules
   const maskedLeads = db.leads.map(lead => {
-    if (lead.unlocked) {
-      // Return full details if already unlocked
-      return lead;
+    // Check if THIS specific contractor has unlocked this lead
+    const isUnlockedByMe = db.unlocks.some(u => u.leadId === lead.id && u.contractorId === user.id);
+    
+    if (isUnlockedByMe) {
+      return { ...lead, unlocked: true };
     } else {
-      // Strip out real names/phones for available leads to prevent console hacking!
+      // Mask customer personal info
       const nameParts = lead.customerName.split(' ');
       const firstName = nameParts[0] || 'Customer';
       const lastNameInitial = nameParts[1] ? nameParts[1].charAt(0) + '.' : '';
-      
       const phoneParts = lead.customerPhone.split('-');
       const areaCode = phoneParts[0] || '(510)';
-      
+
       return {
         ...lead,
+        unlocked: false,
         customerName: `${firstName} ${lastNameInitial}`.trim(),
-        customerPhone: `${areaCode}-***-****` // Securely masked on server side!
+        customerPhone: `${areaCode}-***-****` // Completely secure!
       };
     }
   });
@@ -248,34 +453,50 @@ app.get('/api/leads', (req, res) => {
 });
 
 // ==========================================================================
-// 🛡️ API ROUTE: UNLOCK LEAD TRANSACTION (Secure Balance Deduction)
+// 🛡️ API ROUTE: UNLOCK LEAD TRANSACTION (Isolate Balance Deduction per Contractor)
 // ==========================================================================
 app.post('/api/leads/unlock', (req, res) => {
   const db = readDB();
+  const user = getRequestUser(req, db);
   const { id } = req.body;
-  
+
+  if (!user || user.role !== 'contractor') {
+    return res.status(403).json({ error: "Only contractors can unlock leads." });
+  }
+
   const leadIndex = db.leads.findIndex(l => l.id === id);
   if (leadIndex === -1) {
     return res.status(404).json({ error: "Lead not found." });
   }
 
   const lead = db.leads[leadIndex];
-  if (lead.unlocked) {
-    return res.json({ success: true, lead }); // Already unlocked
+  
+  // Check if already unlocked
+  const alreadyUnlocked = db.unlocks.some(u => u.leadId === lead.id && u.contractorId === user.id);
+  if (alreadyUnlocked) {
+    return res.json({ success: true, lead: { ...lead, unlocked: true } });
   }
 
-  // Verify wallet balance
-  if (db.profile.walletBalance < lead.price) {
+  // Verify specific contractor's balance
+  const dbUser = db.users.find(u => u.id === user.id);
+  if (dbUser.walletBalance < lead.price) {
     return res.status(400).json({ error: "Insufficient wallet balance." });
   }
 
-  // Deduct balance and commit transaction securely
-  db.profile.walletBalance -= lead.price;
-  lead.unlocked = true;
+  // Deduct contractor wallet
+  dbUser.walletBalance -= lead.price;
+
+  // Add lock entry
+  db.unlocks.push({
+    leadId: lead.id,
+    contractorId: user.id,
+    unlockedAt: new Date().toISOString()
+  });
 
   // Add ledger transaction log
   const formattedDate = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ", " + new Date().toLocaleDateString([], { month: 'short', day: 'numeric' });
   const newTx = {
+    userId: user.id,
     type: "unlock",
     amount: lead.price,
     title: `${lead.title} (${lead.city})`,
@@ -285,10 +506,10 @@ app.post('/api/leads/unlock', (req, res) => {
 
   writeDB(db);
 
-  // Broadcast update via WebSockets to all connected clients
-  broadcast({ type: 'LEAD_UNLOCKED', leadId: lead.id, profile: db.profile });
+  const { password, ...userWithoutPass } = dbUser;
+  broadcast({ type: 'LEAD_UNLOCKED', leadId: lead.id, profile: userWithoutPass, contractorId: user.id });
 
-  res.json({ success: true, lead, profile: db.profile });
+  res.json({ success: true, lead: { ...lead, unlocked: true }, profile: userWithoutPass });
 });
 
 // ==========================================================================
@@ -296,17 +517,24 @@ app.post('/api/leads/unlock', (req, res) => {
 // ==========================================================================
 app.post('/api/wallet/deposit', (req, res) => {
   const db = readDB();
+  const user = getRequestUser(req, db);
   const { amount, description } = req.body;
+
+  if (!user || user.role !== 'contractor') {
+    return res.status(403).json({ error: "Only contractors can deposit funds." });
+  }
 
   const depositVal = parseFloat(amount);
   if (isNaN(depositVal) || depositVal <= 0) {
     return res.status(400).json({ error: "Invalid deposit amount." });
   }
 
-  db.profile.walletBalance += depositVal;
+  const dbUser = db.users.find(u => u.id === user.id);
+  dbUser.walletBalance += depositVal;
 
   const formattedDate = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ", " + new Date().toLocaleDateString([], { month: 'short', day: 'numeric' });
   const newTx = {
+    userId: user.id,
     type: "deposit",
     amount: depositVal,
     title: description || "Stripe Deposit",
@@ -316,32 +544,48 @@ app.post('/api/wallet/deposit', (req, res) => {
 
   writeDB(db);
 
-  res.json({ success: true, profile: db.profile });
+  const { password, ...userWithoutPass } = dbUser;
+  res.json({ success: true, profile: userWithoutPass });
 });
 
 app.get('/api/transactions', (req, res) => {
   const db = readDB();
-  res.json(db.transactions);
+  const user = getRequestUser(req, db);
+  
+  if (user && user.role === 'admin') {
+    return res.json(db.transactions);
+  }
+  
+  // Return only matching user transactions
+  const userTx = db.transactions.filter(tx => tx.userId === user.id);
+  res.json(userTx);
 });
 
 // ==========================================================================
-// 🛡️ API ROUTE: POST NEW LEAD (Admin / AI Sim Call Channel)
+// 🛡️ API ROUTE: POST NEW LEAD (Admin / Homeowner / AI Sim Call Channel)
 // ==========================================================================
 app.post('/api/leads/create', (req, res) => {
   const db = readDB();
+  const user = getRequestUser(req, db);
   const { niche, title, city, description, price, customerName, customerPhone } = req.body;
+
+  const customerId = user ? user.id : "usr-homeowner";
 
   const newLead = {
     id: "lead-" + Date.now(),
+    customerId,
     niche,
     title,
     city,
     description,
     price: parseFloat(price) || 30.00,
-    customerName,
-    customerPhone,
-    unlocked: false,
-    date: "Just now"
+    customerName: customerName || "Emergency Client",
+    customerPhone: customerPhone || "(510) 555-0811",
+    date: "Just now",
+    status: "unlocked",
+    jobRevenue: 0,
+    disputed: false,
+    disputeReason: ""
   };
 
   db.leads.unshift(newLead);
@@ -354,16 +598,27 @@ app.post('/api/leads/create', (req, res) => {
 });
 
 // ==========================================================================
-// 🛡️ API ROUTE: LEAD DISPUTES MANAGEMENT (Phase 4 Upgrade)
+// 🛡️ API ROUTE: LEAD DISPUTES MANAGEMENT
 // ==========================================================================
 app.get('/api/disputes', (req, res) => {
   const db = readDB();
-  res.json(db.disputes);
+  const user = getRequestUser(req, db);
+
+  if (user && user.role === 'admin') {
+    return res.json(db.disputes);
+  }
+  const userDisputes = db.disputes.filter(d => d.userId === user.id);
+  res.json(userDisputes);
 });
 
 app.post('/api/leads/dispute', (req, res) => {
   const db = readDB();
+  const user = getRequestUser(req, db);
   const { id, reason } = req.body;
+
+  if (!user || user.role !== 'contractor') {
+    return res.status(403).json({ error: "Only contractors can dispute leads." });
+  }
 
   const leadIndex = db.leads.findIndex(l => l.id === id);
   if (leadIndex === -1) {
@@ -376,6 +631,7 @@ app.post('/api/leads/dispute', (req, res) => {
 
   const dispute = {
     id: "dispute-" + Date.now(),
+    userId: user.id,
     leadId: lead.id,
     title: lead.title,
     city: lead.city,
@@ -394,8 +650,12 @@ app.post('/api/leads/dispute', (req, res) => {
 
 app.post('/api/leads/dispute/resolve', (req, res) => {
   const db = readDB();
-  const { disputeId, action } = req.body; // action: "approve" or "reject"
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Unauthorized. Admin credentials required." });
+  }
 
+  const { disputeId, action } = req.body;
   const disputeIndex = db.disputes.findIndex(d => d.id === disputeId);
   if (disputeIndex === -1) {
     return res.status(404).json({ error: "Dispute not found." });
@@ -405,27 +665,32 @@ app.post('/api/leads/dispute/resolve', (req, res) => {
   const leadIndex = db.leads.findIndex(l => l.id === dispute.leadId);
   const lead = leadIndex !== -1 ? db.leads[leadIndex] : null;
 
+  const targetContractor = db.users.find(u => u.id === dispute.userId);
+
   if (action === "approve") {
     dispute.status = "approved";
     if (lead) {
-      lead.unlocked = false;
       lead.disputed = false;
       lead.status = "unlocked";
       lead.jobRevenue = 0;
     }
+    // Remove the lock entry to let the contractor unlock again if they want, or just delete it
+    db.unlocks = db.unlocks.filter(u => !(u.leadId === dispute.leadId && u.contractorId === dispute.userId));
 
-    // Refund Contractor Wallet
-    db.profile.walletBalance += dispute.price;
-
-    // Add Refund Ledger Transaction log
-    const formattedDate = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ", " + new Date().toLocaleDateString([], { month: 'short', day: 'numeric' });
-    const newTx = {
-      type: "deposit",
-      amount: dispute.price,
-      title: `Refund: ${dispute.title}`,
-      date: formattedDate
-    };
-    db.transactions.unshift(newTx);
+    // Refund target contractor balance
+    if (targetContractor) {
+      targetContractor.walletBalance += dispute.price;
+      
+      // Add Refund Ledger Transaction log
+      const formattedDate = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ", " + new Date().toLocaleDateString([], { month: 'short', day: 'numeric' });
+      db.transactions.unshift({
+        userId: targetContractor.id,
+        type: "deposit",
+        amount: dispute.price,
+        title: `Refund: ${dispute.title}`,
+        date: formattedDate
+      });
+    }
   } else {
     dispute.status = "rejected";
     if (lead) {
@@ -434,12 +699,14 @@ app.post('/api/leads/dispute/resolve', (req, res) => {
   }
 
   writeDB(db);
-  broadcast({ type: 'DISPUTE_RESOLVED', dispute, profile: db.profile });
-  res.json({ success: true, dispute, profile: db.profile });
+  
+  const profileResponse = targetContractor ? { id: targetContractor.id, walletBalance: targetContractor.walletBalance } : null;
+  broadcast({ type: 'DISPUTE_RESOLVED', dispute, profile: profileResponse });
+  res.json({ success: true, dispute, profile: profileResponse });
 });
 
 // ==========================================================================
-// 🛡️ API ROUTE: JOB STATUS & REVENUE UPDATES (Phase 4 Upgrade)
+// 🛡️ API ROUTE: JOB STATUS & REVENUE UPDATES
 // ==========================================================================
 app.post('/api/leads/status', (req, res) => {
   const db = readDB();
@@ -464,19 +731,27 @@ app.post('/api/leads/status', (req, res) => {
 });
 
 // ==========================================================================
-// 🛡️ API ROUTE: OUTBOUND VoIP CALL LOGS & RECORDINGS (Phase 4 Upgrade)
+// 🛡️ API ROUTE: VoIP CALL LOGS & RECORDINGS
 // ==========================================================================
 app.get('/api/calls', (req, res) => {
   const db = readDB();
-  res.json(db.callLogs);
+  const user = getRequestUser(req, db);
+  
+  if (user && user.role === 'admin') {
+    return res.json(db.callLogs);
+  }
+  const userCalls = db.callLogs.filter(c => c.userId === user.id);
+  res.json(userCalls);
 });
 
 app.post('/api/calls/log', (req, res) => {
   const db = readDB();
+  const user = getRequestUser(req, db);
   const { customerName, customerPhone, duration, transcript, niche } = req.body;
 
   const newLog = {
     id: "call-" + Date.now(),
+    userId: user ? user.id : "usr-apex",
     customerName,
     customerPhone,
     duration,
@@ -492,12 +767,19 @@ app.post('/api/calls/log', (req, res) => {
 });
 
 // ==========================================================================
-// 🛡️ API ROUTE: PLATFORM RESET (Wipe local state back to fresh default defaults)
+// 🛡️ API ROUTE: PLATFORM RESET (Wipe back to default users/leads)
 // ==========================================================================
 app.post('/api/platform/reset', (req, res) => {
-  const db = { profile: defaultProfile, leads: defaultLeads, transactions: defaultTransactions, disputes: [], callLogs: [] };
+  const db = {
+    users: defaultUsers,
+    leads: defaultLeads,
+    unlocks: defaultUnlocks,
+    transactions: defaultTransactions,
+    disputes: [],
+    callLogs: []
+  };
   writeDB(db);
-  res.json({ success: true, profile: db.profile });
+  res.json({ success: true, profile: defaultUsers[1] }); // Return apex contractor as reset fallback
 });
 
 // Serve frontend assets
@@ -511,7 +793,7 @@ app.use((req, res) => {
 // HTTP Server
 const server = http.createServer(app);
 
-// WebSocket Server for Real-Time Dispatch Alerts
+// WebSocket Server
 const wss = new WebSocket.Server({ server });
 const clients = new Set();
 

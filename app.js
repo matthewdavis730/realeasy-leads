@@ -28,6 +28,25 @@ const safeStorage = {
   }
 };
 
+// GLOBAL FETCH INTERCEPTOR FOR MULTI-TENANT AUTH
+const originalFetch = window.fetch;
+window.fetch = function(url, options = {}) {
+  if (!options.headers) {
+    options.headers = {};
+  }
+  const storedUser = safeStorage.getItem("re_current_user");
+  if (storedUser) {
+    const user = JSON.parse(storedUser);
+    options.headers['x-user-id'] = user.id;
+  }
+  return originalFetch(url, options);
+};
+
+// AUTH STATE VARIABLES
+let currentUser = null;
+let authMode = "login"; // "login" | "signup"
+let selectedRole = "contractor"; // "contractor" | "homeowner" | "admin"
+
 // APP STATE
 let walletBalance = 150.00;
 let leads = [];
@@ -296,37 +315,263 @@ function fetchDisputes() {
     });
 }
 
-// FETCH CALL HISTORY LOGS
-function fetchCallLogs() {
-  return fetch('/api/calls')
-    .then(res => res.json())
-    .then(data => {
-      callLogs = data;
-      renderCallLogs();
-    });
-}
-
 // INITIALIZE APPLICATION
 function initApp() {
   initTime();
   
-  // Setup UI elements and logic from server APIs
-  Promise.all([
-    fetchProfile(),
-    fetchLeads(),
-    fetchTransactions(),
-    fetchDisputes(),
-    fetchCallLogs()
-  ]).then(() => {
-    connectWebSocket();
-    setupEventListeners();
-    setupAiCallSimulator();
-  }).catch(err => {
-    console.error("Error loading application data from backend server:", err);
-    // Fallback to local rendering setup
-    setupEventListeners();
-    setupAiCallSimulator();
+  const user = currentUser;
+  if (!user) {
+    checkAuthSession();
+    return;
+  }
+
+  // Setup WebSocket connection
+  connectWebSocket();
+
+  // Role-Gated Data Loading
+  if (user.role === 'homeowner') {
+    fetchLeads().then(() => {
+      setupEventListeners();
+      setupHomeownerTickets();
+    }).catch(err => {
+      console.error("Homeowner leads load failed:", err);
+      setupEventListeners();
+    });
+  } else {
+    // Contractor / Admin Data Loading
+    Promise.all([
+      fetchProfile(),
+      fetchLeads(),
+      fetchTransactions(),
+      fetchDisputes(),
+      fetchCallLogs()
+    ]).then(() => {
+      setupEventListeners();
+      setupAiCallSimulator();
+    }).catch(err => {
+      console.error("Error loading application data from backend server:", err);
+      setupEventListeners();
+      setupAiCallSimulator();
+    });
+  }
+}
+
+// 🔐 SESSION CHECK & AUTH GATE CONTROLLERS
+function checkAuthSession() {
+  const storedUser = safeStorage.getItem("re_current_user");
+  const authGate = document.getElementById("auth-gate");
+  
+  if (storedUser) {
+    currentUser = JSON.parse(storedUser);
+    if (authGate) authGate.style.display = "none";
+    applyRoleLayout(currentUser);
+    initApp();
+  } else {
+    currentUser = null;
+    if (authGate) authGate.style.display = "flex";
+    setupAuthListeners();
+  }
+}
+
+function setupAuthListeners() {
+  const authGate = document.getElementById("auth-gate");
+  if (!authGate) return;
+
+  const roleBtns = document.querySelectorAll("#auth-role-selector .role-btn");
+  const toggleLink = document.getElementById("auth-toggle-mode");
+  const authForm = document.getElementById("auth-form");
+  const submitBtn = document.getElementById("auth-submit-btn");
+
+  const nameGroup = document.getElementById("auth-group-name");
+  const phoneGroup = document.getElementById("auth-group-phone");
+  const licenseGroup = document.getElementById("auth-group-license");
+  const subtitle = document.getElementById("auth-gate-subtitle");
+
+  // Handle role selection
+  roleBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      roleBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedRole = btn.getAttribute("data-role");
+      
+      // Update subtitles
+      subtitle.textContent = selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1) + " " + (authMode === "login" ? "Login" : "Registration");
+      
+      // Update form dynamic fields based on current mode and role
+      updateAuthFormFields();
+    });
   });
+
+  // Handle sign up vs login toggles
+  if (toggleLink) {
+    toggleLink.addEventListener("click", () => {
+      if (authMode === "login") {
+        authMode = "signup";
+        toggleLink.textContent = "Already have an account? Log In";
+        submitBtn.textContent = "Create Account";
+      } else {
+        authMode = "login";
+        toggleLink.textContent = "Don't have an account? Sign Up";
+        submitBtn.textContent = "Log In securely";
+      }
+      subtitle.textContent = selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1) + " " + (authMode === "login" ? "Login" : "Registration");
+      updateAuthFormFields();
+    });
+  }
+
+  function updateAuthFormFields() {
+    if (authMode === "login") {
+      nameGroup.style.display = "none";
+      phoneGroup.style.display = "none";
+      licenseGroup.style.display = "none";
+    } else {
+      nameGroup.style.display = "block";
+      phoneGroup.style.display = "block";
+      if (selectedRole === "contractor") {
+        licenseGroup.style.display = "block";
+      } else {
+        licenseGroup.style.display = "none";
+      }
+    }
+  }
+
+  // Handle Form Submit (API Call / Cache Fallback)
+  if (authForm) {
+    // Prevent duplicate registrations
+    authForm.onsubmit = (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("auth-input-email").value.trim();
+      const password = document.getElementById("auth-input-password").value;
+      const name = document.getElementById("auth-input-name").value.trim();
+      const phone = document.getElementById("auth-input-phone").value.trim();
+      const license = document.getElementById("auth-input-license").value.trim();
+
+      const endpoint = authMode === "login" ? "/api/auth/login" : "/api/auth/signup";
+      const payload = authMode === "login" 
+        ? { email, password } 
+        : { name, email, password, role: selectedRole, phone, license };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "⚡ Verifying Credentials...";
+
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.error || "Authentication failed"); });
+        }
+        return res.json();
+      })
+      .then(data => {
+        safeStorage.setItem("re_current_user", JSON.stringify(data.user));
+        currentUser = data.user;
+        
+        // Hide gate and load app
+        authGate.style.display = "none";
+        applyRoleLayout(currentUser);
+        initApp();
+        triggerDynamicIslandNotification("🔐 Access Granted!");
+      })
+      .catch(err => {
+        console.error("Auth API failed, trying offline mock:", err);
+        
+        // Offline demo fallback in case API is offline or file:// mode
+        if (authMode === "login") {
+          let demoUser = null;
+          if (email === "keith@whatsrealeasy.com") {
+            demoUser = { id: "usr-keith", email, role: "admin", name: "Keith Thunds" };
+          } else if (email === "homeowner@example.com") {
+            demoUser = { id: "usr-homeowner", email, role: "homeowner", name: "David Vance", phone: "(510) 555-0811" };
+          } else {
+            demoUser = { id: "usr-apex", email, role: "contractor", name: name || "Apex Plumbing", license: license || "CSLB #1094851", walletBalance: 650.00 };
+          }
+          
+          safeStorage.setItem("re_current_user", JSON.stringify(demoUser));
+          currentUser = demoUser;
+          authGate.style.display = "none";
+          applyRoleLayout(currentUser);
+          initApp();
+          triggerDynamicIslandNotification("🔐 Offline Demo Mode Activated!");
+        } else {
+          alert("Offline registration error. Please use demo credentials to log in: keith@whatsrealeasy.com (Admin) or apex@example.com (Pro) or homeowner@example.com (Client).");
+          submitBtn.disabled = false;
+          submitBtn.textContent = authMode === "login" ? "Log In securely" : "Create Account";
+        }
+      });
+    };
+  }
+}
+
+function applyRoleLayout(user) {
+  const roleLabel = document.getElementById("header-user-role");
+  const walletBadge = document.getElementById("wallet-trigger");
+  const navBar = document.querySelector(".nav-bar");
+  const navMarket = document.getElementById("nav-marketplace");
+  const navUnlocked = document.getElementById("nav-unlocked");
+  const navProfile = document.getElementById("nav-profile");
+  const navAdmin = document.getElementById("nav-admin");
+
+  const screens = document.querySelectorAll(".app-screen");
+
+  if (roleLabel) {
+    roleLabel.textContent = user.role === 'admin' ? "Admin Portal" : user.role === 'homeowner' ? "Homeowner Portal" : "Contractor Portal";
+  }
+
+  // Hide all screens initially
+  screens.forEach(s => s.classList.remove("active"));
+
+  if (user.role === 'homeowner') {
+    // Homeowner UI
+    if (walletBadge) walletBadge.style.display = "none";
+    if (navBar) navBar.style.display = "none";
+    
+    const homeownerScreen = document.getElementById("screen-homeowner");
+    if (homeownerScreen) homeownerScreen.classList.add("active");
+  } else if (user.role === 'admin') {
+    // Admin UI (Keith)
+    if (walletBadge) walletBadge.style.display = "none";
+    if (navBar) {
+      navBar.style.display = "flex";
+      if (navMarket) navMarket.style.display = "none";
+      if (navUnlocked) navUnlocked.style.display = "none";
+      if (navProfile) navProfile.style.display = "flex";
+      if (navAdmin) navAdmin.style.display = "flex";
+    }
+
+    const adminScreen = document.getElementById("screen-admin");
+    if (adminScreen) adminScreen.classList.add("active");
+    if (navAdmin) {
+      document.querySelectorAll(".nav-bar .nav-item").forEach(i => i.classList.remove("active"));
+      navAdmin.classList.add("active");
+    }
+  } else {
+    // Contractor UI
+    if (walletBadge) walletBadge.style.display = "flex";
+    if (navBar) {
+      navBar.style.display = "flex";
+      if (navMarket) navMarket.style.display = "flex";
+      if (navUnlocked) navUnlocked.style.display = "flex";
+      if (navProfile) navProfile.style.display = "flex";
+      if (navAdmin) navAdmin.style.display = "none";
+    }
+
+    const marketScreen = document.getElementById("screen-marketplace");
+    if (marketScreen) marketScreen.classList.add("active");
+    if (navMarket) {
+      document.querySelectorAll(".nav-bar .nav-item").forEach(i => i.classList.remove("active"));
+      navMarket.classList.add("active");
+    }
+  }
+}
+
+function handleLogout() {
+  safeStorage.clear();
+  currentUser = null;
+  location.reload();
 }
 
 if (document.readyState === "loading") {
@@ -364,6 +609,15 @@ function updateWalletUI() {
 
 // SETUP DOM EVENT LISTENERS
 function setupEventListeners() {
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      if (confirm("Are you sure you want to log out of RealEasy Leads?")) {
+        handleLogout();
+      }
+    };
+  }
+
   // Navigation Tab Switches
   const navItems = document.querySelectorAll(".nav-bar .nav-item");
   const screens = document.querySelectorAll(".app-screen");
@@ -2017,8 +2271,8 @@ function renderAdminVerificationLedger(profile) {
       
       <!-- Action Review Buttons -->
       <div style="display:flex; gap:8px; justify-content:flex-end;">
-        <button class="btn btn-secondary" onclick="resolveComplianceVerify('reject')" style="font-size:8px; padding:2px 8px; color:#f87171; border-color:rgba(239,68,68,0.25);">Reject Audit</button>
-        <button class="btn btn-primary" onclick="resolveComplianceVerify('approve')" style="font-size:8px; padding:2px 8px; background:var(--success);">Approve Verify</button>
+        <button class="btn btn-secondary" onclick="resolveComplianceVerify('reject', '${profile.id}')" style="font-size:8px; padding:2px 8px; color:#f87171; border-color:rgba(239,68,68,0.25);">Reject Audit</button>
+        <button class="btn btn-primary" onclick="resolveComplianceVerify('approve', '${profile.id}')" style="font-size:8px; padding:2px 8px; background:var(--success);">Approve Verify</button>
       </div>
     </div>
   `;
@@ -2048,7 +2302,7 @@ window.viewAuditDocument = function(title, base64) {
   }
 };
 
-window.resolveComplianceVerify = function(action) {
+window.resolveComplianceVerify = function(action, contractorId) {
   let reason = "";
   if (action === "reject") {
     reason = prompt("Provide audit rejection reason:");
@@ -2061,11 +2315,12 @@ window.resolveComplianceVerify = function(action) {
   fetch('/api/profile/verify/resolve', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action, reason })
+    body: JSON.stringify({ action, reason, contractorId })
   })
   .then(res => res.json())
   .then(() => {
-    fetchProfile();
+    // If we are admin, we don't reload profile of admin, we reload all data
+    initApp();
     triggerDynamicIslandNotification(`Compliance audit ${action}d!`);
   })
   .catch(err => {
@@ -2086,3 +2341,94 @@ window.resolveComplianceVerify = function(action) {
     triggerDynamicIslandNotification(`Compliance audit ${action}d locally!`);
   });
 };
+
+// ==========================================================================
+// 🏠 HOMEOWNER SERVICE TICKETS SYSTEM
+// ==========================================================================
+function setupHomeownerTickets() {
+  const list = document.getElementById("homeowner-tickets-list");
+  if (!list) return;
+
+  if (leads.length === 0) {
+    list.innerHTML = `
+      <div style="text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 12px; line-height: 1.5; background: rgba(255,255,255,0.01); border: 1px dashed var(--border-card); border-radius: 18px;">
+        No active requests found.<br>Use the form above to submit an emergency job.
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = leads.map(t => {
+    let badgeClass = "ticket-status-reviewing";
+    let statusText = "Reviewing";
+    if (t.status === "contacted") {
+      badgeClass = "ticket-status-contacted";
+      statusText = "Contractor Contacted";
+    } else if (t.status === "booked") {
+      badgeClass = "ticket-status-booked";
+      statusText = "Job Booked";
+    } else if (t.status === "completed") {
+      badgeClass = "ticket-status-completed";
+      statusText = "Completed";
+    }
+    return `
+      <div class="lead-card" style="margin: 0; padding: 15px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+          <div>
+            <span class="lead-badge" style="font-size: 9px; padding: 2px 6px;">${t.niche.toUpperCase()}</span>
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-top: 6px;">${t.title}</h4>
+          </div>
+          <span class="ticket-status-badge ${badgeClass}">${statusText}</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px;">${t.description}</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size: 10px; color: var(--text-muted);">
+          <span>Location: <strong>${t.city}</strong></span>
+          <span>Posted: <strong>${t.date || 'Just now'}</strong></span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Setup homeowner form submit listener (once)
+  const form = document.getElementById("homeowner-request-form");
+  if (form) {
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const niche = document.getElementById("request-niche").value;
+      const title = document.getElementById("request-title").value.trim();
+      const city = document.getElementById("request-city").value;
+      const description = document.getElementById("request-desc").value.trim();
+
+      const submitBtn = document.getElementById("request-submit-btn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "⚡ Dispatching Professionals...";
+
+      fetch('/api/leads/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ niche, title, city, description })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to submit request");
+        return res.json();
+      })
+      .then(() => {
+        triggerDynamicIslandNotification("🚀 Service request dispatched!");
+        form.reset();
+        submitBtn.disabled = false;
+        submitBtn.textContent = "🚀 Dispatch Local Contractors";
+        // Reload leads
+        fetchLeads().then(() => {
+          setupHomeownerTickets();
+        });
+      })
+      .catch(err => {
+        console.error("Error creating ticket:", err);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "🚀 Dispatch Local Contractors";
+        alert("Failed to submit request. Please try again.");
+      });
+    };
+  }
+}
+
