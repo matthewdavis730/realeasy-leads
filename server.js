@@ -421,9 +421,12 @@ app.get('/api/leads', (req, res) => {
     return res.json(homeownerLeads);
   }
 
-  // If Admin, return all leads with FULL details
+  // If Admin, return all leads with FULL details (but with correct unlocked state)
   if (user && user.role === 'admin') {
-    return res.json(db.leads.map(l => ({ ...l, unlocked: true })));
+    return res.json(db.leads.map(l => {
+      const isUnlocked = db.unlocks.some(u => u.leadId === l.id);
+      return { ...l, unlocked: isUnlocked };
+    }));
   }
 
   // If Contractor, apply Pay-To-Unlock security rules
@@ -784,6 +787,23 @@ app.post('/api/platform/reset', (req, res) => {
 });
 
 // Serve frontend assets
+// ==========================================================================
+// 🛡️ API ROUTE: ADMIN GET ALL CONTRACTORS (For Keith's backoffice auditing)
+// ==========================================================================
+app.get('/api/admin/contractors', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+
+  const contractors = db.users
+    .filter(u => u.role === 'contractor')
+    .map(({ password, ...c }) => c);
+
+  res.json(contractors);
+});
+
 app.use(express.static(__dirname));
 
 // Send main file

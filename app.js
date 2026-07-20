@@ -337,8 +337,22 @@ function initApp() {
       console.error("Homeowner leads load failed:", err);
       setupEventListeners();
     });
+  } else if (user.role === 'admin') {
+    // Admin (Keith) Data Loading
+    Promise.all([
+      fetchLeads(),
+      fetchDisputes(),
+      fetchAdminContractors()
+    ]).then(() => {
+      setupEventListeners();
+      setupAiCallSimulator();
+    }).catch(err => {
+      console.error("Admin data load failed:", err);
+      setupEventListeners();
+      setupAiCallSimulator();
+    });
   } else {
-    // Contractor / Admin Data Loading
+    // Contractor Data Loading
     Promise.all([
       fetchProfile(),
       fetchLeads(),
@@ -2432,3 +2446,46 @@ function setupHomeownerTickets() {
   }
 }
 
+// FETCH REGISTERED CONTRACTORS FOR ADMIN CENTER
+function fetchAdminContractors() {
+  const container = document.getElementById("admin-contractors-list");
+  if (!container) return Promise.resolve();
+
+  return fetch('/api/admin/contractors')
+    .then(res => res.json())
+    .then(contractors => {
+      if (contractors.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 15px 0; color: var(--text-muted); font-size: 11px;">
+            No contractors registered yet.
+          </div>
+        `;
+        return;
+      }
+      container.innerHTML = contractors.map(c => {
+        const badgeColor = c.verified ? "var(--success)" : "var(--text-muted)";
+        const badgeBg = c.verified ? "rgba(16, 185, 129, 0.05)" : "rgba(255,255,255,0.03)";
+        const badgeBorder = c.verified ? "rgba(16, 185, 129, 0.15)" : "rgba(255,255,255,0.08)";
+        const statusText = c.verificationStatus ? c.verificationStatus.toUpperCase() : "UNVERIFIED";
+
+        return `
+          <div class="lead-card" style="margin: 0; padding: 12px; background: rgba(0,0,0,0.1); border: 1px solid var(--border-card); display: flex; flex-direction: column; gap: 6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:800; color:#fff;">${c.name}</span>
+              <span style="font-size:7px; font-weight:800; color:${badgeColor}; background:${badgeBg}; padding:2px 6px; border-radius:6px; border:1px solid ${badgeBorder};">${statusText}</span>
+            </div>
+            <div style="font-size:10px; color:var(--text-secondary); line-height: 1.4;">
+              License: <strong>${c.license}</strong><br>
+              Phone: <strong>${c.phone || 'N/A'}</strong><br>
+              Email: <strong>${c.email}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 6px; margin-top: 2px;">
+              <span style="font-size: 9px; color: var(--text-muted);">Wallet Balance</span>
+              <span style="font-size: 11px; font-weight: 800; color: var(--success);">$${c.walletBalance.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    })
+    .catch(err => console.error("Error fetching contractors list:", err));
+}
