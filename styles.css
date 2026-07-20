@@ -830,7 +830,7 @@ body {
 
 .role-selector {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px;
@@ -900,4 +900,43 @@ body {
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.05);
 }
+
+/* ==========================================================================
+   🔐 ROLE THEMATIC HIGHLIGHT GLOWS (Phase 6 Customizations)
+   ========================================================================== */
+.auth-card {
+  transition: box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Homeowner Blue Glow Theme */
+.auth-gate-overlay.theme-homeowner .auth-card {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+              0 0 25px rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+.auth-gate-overlay.theme-homeowner .role-btn[data-role="homeowner"].active {
+  background: rgba(56, 189, 248, 0.12) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+}
+
+/* Contractor Green Glow Theme */
+.auth-gate-overlay.theme-contractor .auth-card {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+              0 0 25px rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+.auth-gate-overlay.theme-contractor .role-btn[data-role="contractor"].active {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Admin Purple Glow Theme */
+.auth-gate-overlay.theme-admin .auth-card {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+              0 0 25px rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.25);
+}
+
 

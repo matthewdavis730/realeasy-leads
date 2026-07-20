@@ -422,6 +422,7 @@ function setupAuthListeners() {
   const authGate = document.getElementById("auth-gate");
   if (!authGate) return;
 
+  const roleSelector = document.getElementById("auth-role-selector");
   const roleBtns = document.querySelectorAll("#auth-role-selector .role-btn");
   const toggleLink = document.getElementById("auth-toggle-mode");
   const authForm = document.getElementById("auth-form");
@@ -429,8 +430,15 @@ function setupAuthListeners() {
 
   const nameGroup = document.getElementById("auth-group-name");
   const phoneGroup = document.getElementById("auth-group-phone");
+  const cityGroup = document.getElementById("auth-group-city");
+  const nicheGroup = document.getElementById("auth-group-niche");
   const licenseGroup = document.getElementById("auth-group-license");
   const subtitle = document.getElementById("auth-gate-subtitle");
+  
+  const adminToggleLink = document.getElementById("auth-admin-toggle-link");
+
+  // Initial class setup
+  updateAuthTheme();
 
   // Handle role selection
   roleBtns.forEach(btn => {
@@ -442,14 +450,44 @@ function setupAuthListeners() {
       // Update subtitles
       subtitle.textContent = selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1) + " " + (authMode === "login" ? "Login" : "Registration");
       
-      // Update form dynamic fields based on current mode and role
+      updateAuthTheme();
       updateAuthFormFields();
     });
   });
 
+  // Handle Admin Gateway Switch
+  if (adminToggleLink) {
+    adminToggleLink.onclick = (e) => {
+      e.preventDefault();
+      if (selectedRole !== "admin") {
+        // Switch to Admin mode
+        selectedRole = "admin";
+        authMode = "login";
+        roleSelector.style.display = "none";
+        subtitle.textContent = "Admin Portal Login";
+        adminToggleLink.innerHTML = "🔙 Back to Member Access";
+        toggleLink.style.display = "none";
+      } else {
+        // Switch back to Member mode
+        selectedRole = "contractor";
+        authMode = "login";
+        roleSelector.style.display = "grid";
+        roleBtns.forEach(b => b.classList.remove("active"));
+        const contractorBtn = document.querySelector('#auth-role-selector .role-btn[data-role="contractor"]');
+        if (contractorBtn) contractorBtn.classList.add("active");
+        subtitle.textContent = "Contractor Login";
+        adminToggleLink.innerHTML = "🔐 Staff & Admin Entryway";
+        toggleLink.style.display = "block";
+        toggleLink.textContent = "Don't have an account? Sign Up";
+      }
+      updateAuthTheme();
+      updateAuthFormFields();
+    };
+  }
+
   // Handle sign up vs login toggles
   if (toggleLink) {
-    toggleLink.addEventListener("click", () => {
+    toggleLink.onclick = () => {
       if (authMode === "login") {
         authMode = "signup";
         toggleLink.textContent = "Already have an account? Log In";
@@ -461,41 +499,62 @@ function setupAuthListeners() {
       }
       subtitle.textContent = selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1) + " " + (authMode === "login" ? "Login" : "Registration");
       updateAuthFormFields();
-    });
+    };
+  }
+
+  function updateAuthTheme() {
+    authGate.className = "auth-gate-overlay";
+    if (selectedRole === 'homeowner') {
+      authGate.classList.add("theme-homeowner");
+    } else if (selectedRole === 'admin') {
+      authGate.classList.add("theme-admin");
+    } else {
+      authGate.classList.add("theme-contractor");
+    }
   }
 
   function updateAuthFormFields() {
     if (authMode === "login") {
-      nameGroup.style.display = "none";
-      phoneGroup.style.display = "none";
-      licenseGroup.style.display = "none";
+      if (nameGroup) nameGroup.style.display = "none";
+      if (phoneGroup) phoneGroup.style.display = "none";
+      if (cityGroup) cityGroup.style.display = "none";
+      if (nicheGroup) nicheGroup.style.display = "none";
+      if (licenseGroup) licenseGroup.style.display = "none";
     } else {
-      nameGroup.style.display = "block";
-      phoneGroup.style.display = "block";
+      if (nameGroup) nameGroup.style.display = "block";
+      if (phoneGroup) phoneGroup.style.display = "block";
+      if (cityGroup) cityGroup.style.display = "block";
       if (selectedRole === "contractor") {
-        licenseGroup.style.display = "block";
+        if (nicheGroup) nicheGroup.style.display = "block";
+        if (licenseGroup) licenseGroup.style.display = "block";
       } else {
-        licenseGroup.style.display = "none";
+        if (nicheGroup) nicheGroup.style.display = "none";
+        if (licenseGroup) licenseGroup.style.display = "none";
       }
     }
   }
 
   // Handle Form Submit (API Call / Cache Fallback)
   if (authForm) {
-    // Prevent duplicate registrations
     authForm.onsubmit = (e) => {
       e.preventDefault();
 
       const email = document.getElementById("auth-input-email").value.trim();
       const password = document.getElementById("auth-input-password").value;
-      const name = document.getElementById("auth-input-name").value.trim();
-      const phone = document.getElementById("auth-input-phone").value.trim();
-      const license = document.getElementById("auth-input-license").value.trim();
+      const name = document.getElementById("auth-input-name") ? document.getElementById("auth-input-name").value.trim() : "";
+      
+      const phoneCode = document.getElementById("auth-input-phone-code") ? document.getElementById("auth-input-phone-code").value : "+1";
+      const phoneNum = document.getElementById("auth-input-phone") ? document.getElementById("auth-input-phone").value.trim() : "";
+      const phone = phoneNum ? `${phoneCode} ${phoneNum}` : "";
+
+      const city = document.getElementById("auth-input-city") ? document.getElementById("auth-input-city").value.trim() : "";
+      const niche = document.getElementById("auth-input-niche") ? document.getElementById("auth-input-niche").value : "";
+      const license = document.getElementById("auth-input-license") ? document.getElementById("auth-input-license").value.trim() : "";
 
       const endpoint = authMode === "login" ? "/api/auth/login" : "/api/auth/signup";
       const payload = authMode === "login" 
         ? { email, password } 
-        : { name, email, password, role: selectedRole, phone, license };
+        : { name, email, password, role: selectedRole, phone, city, niche, license };
 
       submitBtn.disabled = true;
       submitBtn.textContent = "⚡ Verifying Credentials...";
@@ -530,9 +589,9 @@ function setupAuthListeners() {
           if (email === "keith@whatsrealeasy.com") {
             demoUser = { id: "usr-keith", email, role: "admin", name: "Keith Thunds" };
           } else if (email === "homeowner@example.com") {
-            demoUser = { id: "usr-homeowner", email, role: "homeowner", name: "David Vance", phone: "(510) 555-0811" };
+            demoUser = { id: "usr-homeowner", email, role: "homeowner", name: "David Vance", phone: "+1 (510) 555-0811", city: "Newark, CA" };
           } else {
-            demoUser = { id: "usr-apex", email, role: "contractor", name: name || "Apex Plumbing", license: license || "CSLB #1094851", walletBalance: 650.00 };
+            demoUser = { id: "usr-apex", email, role: "contractor", name: name || "Apex Plumbing & Rooter", license: license || "CSLB #1094851", walletBalance: 650.00, phone: "+1 (510) 555-9000", city: "Newark, CA" };
           }
           
           safeStorage.setItem("re_current_user", JSON.stringify(demoUser));
@@ -542,7 +601,7 @@ function setupAuthListeners() {
           initApp();
           triggerDynamicIslandNotification("🔐 Offline Demo Mode Activated!");
         } else {
-          alert("Offline registration error. Please use demo credentials to log in: keith@whatsrealeasy.com (Admin) or apex@example.com (Pro) or homeowner@example.com (Client).");
+          alert("Error: " + err.message);
           submitBtn.disabled = false;
           submitBtn.textContent = authMode === "login" ? "Log In securely" : "Create Account";
         }

@@ -239,7 +239,7 @@ function getRequestUser(req, db) {
 // ==========================================================================
 app.post('/api/auth/signup', (req, res) => {
   const db = readDB();
-  const { name, email, password, role, license, phone } = req.body;
+  const { name, email, password, role, license, phone, city, niche } = req.body;
 
   if (!email || !password || !role || !name) {
     return res.status(400).json({ error: "Missing required registration parameters." });
@@ -257,13 +257,15 @@ app.post('/api/auth/signup', (req, res) => {
     password,
     role,
     name,
-    phone: phone || ""
+    phone: phone || "",
+    city: city || "",
+    suspended: false
   };
 
   if (role === 'contractor') {
     newUser.license = license || "CSLB Pending";
     newUser.walletBalance = 150.00;
-    newUser.activeCitiesFilter = ["newark", "las vegas"];
+    newUser.activeCitiesFilter = city ? [city.toLowerCase()] : ["newark", "las vegas"];
     newUser.smsAlerts = true;
     newUser.emailReports = false;
     newUser.verified = false;
@@ -272,7 +274,7 @@ app.post('/api/auth/signup', (req, res) => {
     newUser.verificationLicenseDoc = "";
     newUser.verificationRejectionReason = "";
     newUser.avatarImage = "";
-    newUser.description = `${name} is a professional contractor service.`;
+    newUser.description = `${name} is a professional contractor service specializing in ${niche || 'plumbing'}.`;
 
     // Log initial deposit
     db.transactions.unshift({

@@ -90,11 +90,10 @@
           <p class="auth-subtitle" id="auth-gate-subtitle">Contractor Login</p>
         </div>
 
-        <!-- Role Selectors (Homeowner / Contractor / Admin) -->
+        <!-- Role Selectors (Homeowner / Contractor) -->
         <div class="role-selector" id="auth-role-selector">
-          <button class="role-btn active" data-role="contractor">Pro</button>
-          <button class="role-btn" data-role="homeowner">Client</button>
-          <button class="role-btn" data-role="admin">Admin</button>
+          <button class="role-btn active" data-role="contractor">💼 Service Pro</button>
+          <button class="role-btn" data-role="homeowner">🏠 Homeowner</button>
         </div>
 
         <form id="auth-form" style="display: flex; flex-direction: column; gap: 10px;">
@@ -113,7 +112,32 @@
           <!-- Phone Field (signup only) -->
           <div class="form-group" id="auth-group-phone" style="display: none;">
             <label for="auth-input-phone" style="font-size: 9px;">Contact Phone</label>
-            <input type="tel" id="auth-input-phone" class="form-input" placeholder="(510) 555-9000">
+            <div style="display: flex; gap: 8px;">
+              <select id="auth-input-phone-code" class="form-input" style="width: 85px; padding: 10px; font-size: 11px; background: var(--bg-card); border-color: var(--border-card); color: #fff; border-radius: 10px;">
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+880">🇧🇩 +880</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+61">🇦🇺 +61</option>
+              </select>
+              <input type="tel" id="auth-input-phone" class="form-input" style="flex: 1;" placeholder="510-555-9000">
+            </div>
+          </div>
+
+          <!-- City Field (signup only) -->
+          <div class="form-group" id="auth-group-city" style="display: none;">
+            <label for="auth-input-city" style="font-size: 9px;">Operating City</label>
+            <input type="text" id="auth-input-city" class="form-input" placeholder="e.g. Newark, CA">
+          </div>
+
+          <!-- Contractor Niche Specialty (contractor signup only) -->
+          <div class="form-group" id="auth-group-niche" style="display: none;">
+            <label for="auth-input-niche" style="font-size: 9px;">Service Specialty Niche</label>
+            <select id="auth-input-niche" class="form-input form-select" style="background: var(--bg-card); border-color: var(--border-card); color: #fff;">
+              <option value="plumbing">Plumbing &amp; Rooter</option>
+              <option value="roofing">Roofing &amp; Patching</option>
+              <option value="glass">Glass &amp; Windows</option>
+            </select>
           </div>
 
           <!-- CSLB License Field (contractor signup only) -->
@@ -136,6 +160,11 @@
 
         <!-- Toggle Sign up / Login -->
         <span class="auth-toggle-link" id="auth-toggle-mode">Don't have an account? Sign Up</span>
+
+        <!-- Admin Portal Toggle Link -->
+        <div style="text-align: center; margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.04); padding-top: 10px;" id="auth-admin-toggle-wrapper">
+          <a href="#" id="auth-admin-toggle-link" style="font-size: 10px; color: var(--text-muted); text-decoration: none; font-weight: 600; letter-spacing: 0.5px; transition: color 0.2s;">🔐 Staff &amp; Admin Entryway</a>
+        </div>
       </div>
     </div>
 
@@ -381,6 +410,9 @@
               </summary>
               <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 11px;">
                 <p style="color: var(--text-muted); margin: 0 0 5px 0; line-height: 1.4;">To verify your profile, upload a copy of your State ID and your physical CSLB Contractor license pocket card.</p>
+                <div style="font-size: 9px; color: var(--success); background: rgba(16, 185, 129, 0.05); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.15); line-height: 1.3; margin-bottom: 8px;">
+                  💡 <strong>Priority Pro Benefits:</strong> Verified accounts get 5-minute earlier lead alerts, higher placement in geographic matches, and premium 24/7 priority support.
+                </div>
                 
                 <div class="form-group">
                   <label style="font-size: 9px; margin-bottom: 2px;">1. Government Issued Photo ID</label>
