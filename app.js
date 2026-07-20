@@ -377,13 +377,19 @@ function initApp() {
 
   // Role-Gated Data Loading
   if (user.role === 'homeowner') {
-    fetchLeads().then(() => {
-      setupEventListeners();
-      setupHomeownerTickets();
-    }).catch(err => {
-      console.error("Homeowner leads load failed:", err);
-      setupEventListeners();
-    });
+    // Homeowner Data Loading
+    fetchLeads()
+      .then(() => fetchHomeownerPros())
+      .then(() => {
+        setupHomeownerTickets();
+        setupEventListeners();
+        setupAiCallSimulator();
+      })
+      .catch(err => {
+        console.error("Homeowner data load failed:", err);
+        setupEventListeners();
+        setupAiCallSimulator();
+      });
   } else if (user.role === 'admin') {
     // Admin (Keith) Data Loading
     Promise.all([
@@ -403,20 +409,6 @@ function initApp() {
       setupEventListeners();
       setupAiCallSimulator();
     });
-  } else if (user.role === 'homeowner') {
-    // Homeowner Data Loading
-    fetchLeads()
-      .then(() => fetchHomeownerPros())
-      .then(() => {
-        setupHomeownerTickets();
-        setupEventListeners();
-        setupAiCallSimulator();
-      })
-      .catch(err => {
-        console.error("Homeowner data load failed:", err);
-        setupEventListeners();
-        setupAiCallSimulator();
-      });
   } else {
     // Contractor Data Loading
     Promise.all([
