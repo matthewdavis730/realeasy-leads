@@ -657,6 +657,40 @@
             </button>
           </form>
         </details>
+
+        <!-- Pricing Rules Manager (Collapsible) -->
+        <details class="lead-card" style="border: 1px dashed rgba(255,255,255,0.08); background: rgba(0,0,0,0.15); margin-top: 15px;">
+          <summary style="font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-primary); user-select: none;">
+            📈 Global Lead Pricing Rules
+          </summary>
+          <div style="margin-top: 15px;">
+            <div id="pricing-rules-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+              <!-- Dynamic Rows populated by app.js -->
+            </div>
+            <button class="btn btn-secondary" style="font-size: 10px; width: 100%; margin-bottom: 10px;" id="add-pricing-rule-btn">
+              + Add New Price Rule
+            </button>
+            <button class="btn btn-primary" style="font-size: 11px; width: 100%;" id="save-pricing-rules-btn">
+              Save Pricing Rules
+            </button>
+          </div>
+        </details>
+
+        <!-- AI Operator Configurator (Collapsible) -->
+        <details class="lead-card" style="border: 1px dashed rgba(255,255,255,0.08); background: rgba(0,0,0,0.15); margin-top: 15px;">
+          <summary style="font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-primary); user-select: none;">
+            🤖 AI Operator Prompt Config
+          </summary>
+          <div style="margin-top: 15px;">
+            <div class="form-group">
+              <label for="ai-system-instructions">Operator System Instructions</label>
+              <textarea id="ai-system-instructions" class="form-input" style="min-height: 120px; resize: vertical; font-size: 11px; line-height: 1.4;" placeholder="Instructions for the AI Operator..."></textarea>
+            </div>
+            <button class="btn btn-primary" style="font-size: 11px; width: 100%; margin-top: 5px;" id="save-ai-instructions-btn">
+              Save Operator Prompt
+            </button>
+          </div>
+        </details>
       </section>
 
     </main>

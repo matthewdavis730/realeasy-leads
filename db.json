@@ -6,7 +6,8 @@
       "password": "admin",
       "role": "admin",
       "name": "Keith Thunds",
-      "phone": "(866) 921-8235"
+      "phone": "(866) 921-8235",
+      "suspended": false
     },
     {
       "id": "usr-apex",
@@ -29,7 +30,8 @@
       "verificationIdDoc": "",
       "verificationLicenseDoc": "",
       "verificationRejectionReason": "",
-      "avatarImage": ""
+      "avatarImage": "",
+      "suspended": false
     },
     {
       "id": "usr-homeowner",
@@ -37,7 +39,8 @@
       "password": "password",
       "role": "homeowner",
       "name": "David Vance",
-      "phone": "(510) 555-0811"
+      "phone": "(510) 555-0811",
+      "suspended": false
     }
   ],
   "leads": [
@@ -166,5 +169,13 @@
     }
   ],
   "disputes": [],
-  "callLogs": []
+  "callLogs": [],
+  "pricingRules": [
+    { "id": "pr-1", "niche": "plumbing", "city": "Newark", "price": 30 },
+    { "id": "pr-2", "niche": "roofing", "city": "Las Vegas", "price": 45 },
+    { "id": "pr-3", "niche": "glass", "city": "San Rafael", "price": 35 }
+  ],
+  "aiConfig": {
+    "systemInstructions": "You are a professional local emergency operator representing Keith Thunds' service network. Greet the homeowner calmly, ask for their full name, confirm their contact number, verify their location and city, and ask them to explain the emergency. Speak professionally, be reassuring, and finalize the call by saying: 'I will dispatch a contractor immediately.'"
+  }
 }

@@ -84,6 +84,23 @@ function connectWebSocket() {
         fetchLeads();
       } else if (data.type === 'PROFILE_VERIFICATION_SUBMITTED' || data.type === 'PROFILE_VERIFICATION_RESOLVED') {
         fetchProfile();
+        if (currentUser && currentUser.role === 'admin') fetchAdminContractors();
+      } else if (data.type === 'WALLETS_UPDATED') {
+        if (currentUser && currentUser.role === 'admin') {
+          fetchAdminContractors();
+        } else {
+          fetchProfile();
+        }
+      } else if (data.type === 'CONTRACTOR_SUSPENSION_TOGGLED') {
+        if (currentUser && currentUser.id === data.contractorId) {
+          if (data.suspended) {
+            alert("Your contractor account has been suspended by Admin. You are being logged out.");
+            handleLogout();
+          }
+        }
+        if (currentUser && currentUser.role === 'admin') {
+          fetchAdminContractors();
+        }
       }
     } catch(e) {
       console.error("Error parsing WebSocket message:", e);
@@ -342,9 +359,13 @@ function initApp() {
     Promise.all([
       fetchLeads(),
       fetchDisputes(),
-      fetchAdminContractors()
+      fetchAdminContractors(),
+      fetchPricingRules(),
+      fetchAiInstructions()
     ]).then(() => {
       setupEventListeners();
+      setupPricingRulesListeners();
+      setupAiInstructionsListeners();
       setupAiCallSimulator();
     }).catch(err => {
       console.error("Admin data load failed:", err);
@@ -1321,7 +1342,6 @@ function runAiSimulation() {
         title: "Emergency Gas Water Heater Leak",
         city: "Newark, CA",
         description: "Emergency gas water heater tank is leaking. Basement floor has water pooling. Customer needs a plumber out immediately.",
-        price: 30.00,
         customerName: "David Vance",
         customerPhone: "(510) 555-0811"
       };
@@ -2463,10 +2483,17 @@ function fetchAdminContractors() {
         return;
       }
       container.innerHTML = contractors.map(c => {
-        const badgeColor = c.verified ? "var(--success)" : "var(--text-muted)";
-        const badgeBg = c.verified ? "rgba(16, 185, 129, 0.05)" : "rgba(255,255,255,0.03)";
-        const badgeBorder = c.verified ? "rgba(16, 185, 129, 0.15)" : "rgba(255,255,255,0.08)";
-        const statusText = c.verificationStatus ? c.verificationStatus.toUpperCase() : "UNVERIFIED";
+        let badgeColor = c.verified ? "var(--success)" : "var(--text-muted)";
+        let badgeBg = c.verified ? "rgba(16, 185, 129, 0.05)" : "rgba(255,255,255,0.03)";
+        let badgeBorder = c.verified ? "rgba(16, 185, 129, 0.15)" : "rgba(255,255,255,0.08)";
+        let statusText = c.verificationStatus ? c.verificationStatus.toUpperCase() : "UNVERIFIED";
+
+        if (c.suspended) {
+          badgeColor = "#f87171";
+          badgeBg = "rgba(239, 68, 68, 0.05)";
+          badgeBorder = "rgba(239, 68, 68, 0.2)";
+          statusText = "SUSPENDED";
+        }
 
         return `
           <div class="lead-card" style="margin: 0; padding: 12px; background: rgba(0,0,0,0.1); border: 1px solid var(--border-card); display: flex; flex-direction: column; gap: 6px;">
@@ -2483,9 +2510,205 @@ function fetchAdminContractors() {
               <span style="font-size: 9px; color: var(--text-muted);">Wallet Balance</span>
               <span style="font-size: 11px; font-weight: 800; color: var(--success);">$${c.walletBalance.toFixed(2)}</span>
             </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; border-top: 1px dashed rgba(255,255,255,0.03); padding-top: 6px; margin-top: 2px;">
+              <button class="btn btn-secondary" onclick="adjustContractorBalance('${c.id}')" style="font-size:8px; padding:2px 8px;">Adjust Balance</button>
+              <button class="btn ${c.suspended ? 'btn-primary' : 'btn-secondary'}" onclick="toggleContractorSuspension('${c.id}')" style="font-size:8px; padding:2px 8px; ${c.suspended ? 'background:var(--success); border-color:var(--success); color:#fff;' : 'color:#f87171; border-color:rgba(239,68,68,0.25);'}">
+                ${c.suspended ? 'Reactivate' : 'Suspend'}
+              </button>
+            </div>
           </div>
         `;
       }).join('');
     })
     .catch(err => console.error("Error fetching contractors list:", err));
+}
+
+// 👑 ADMIN: ADJUST CONTRACTOR BALANCE
+window.adjustContractorBalance = function(contractorId) {
+  const amountStr = prompt("Enter adjustment amount (e.g. +100 to add $100, -50 to deduct $50):");
+  if (amountStr === null) return;
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount)) {
+    alert("Invalid numeric amount!");
+    return;
+  }
+
+  fetch('/api/admin/contractors/adjust-balance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contractorId, amount })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("Balance adjustment failed.");
+    return res.json();
+  })
+  .then(() => {
+    triggerDynamicIslandNotification("💸 Balance Adjusted!");
+    initApp();
+  })
+  .catch(err => alert("Error: " + err.message));
+};
+
+// 👑 ADMIN: TOGGLE CONTRACTOR SUSPENSION
+window.toggleContractorSuspension = function(contractorId) {
+  if (!confirm("Are you sure you want to change suspension status for this contractor?")) return;
+
+  fetch('/api/admin/contractors/toggle-suspension', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contractorId })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("Suspension toggle failed.");
+    return res.json();
+  })
+  .then(data => {
+    const stateText = data.contractor.suspended ? "SUSPENDED" : "REACTIVATED";
+    triggerDynamicIslandNotification(`Pro is now ${stateText}!`);
+    initApp();
+  })
+  .catch(err => alert("Error: " + err.message));
+};
+
+// 👑 ADMIN: PRICING RULES MANAGEMENT
+let pricingRules = [];
+
+function fetchPricingRules() {
+  const container = document.getElementById("pricing-rules-container");
+  if (!container) return Promise.resolve();
+
+  return fetch('/api/admin/pricing-rules')
+    .then(res => res.json())
+    .then(rules => {
+      pricingRules = rules;
+      renderPricingRules();
+    })
+    .catch(err => console.error("Error loading pricing rules:", err));
+}
+
+function renderPricingRules() {
+  const container = document.getElementById("pricing-rules-container");
+  if (!container) return;
+
+  if (pricingRules.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 15px 0; color: var(--text-muted); font-size: 11px; background: rgba(0,0,0,0.1); border: 1px dashed rgba(255,255,255,0.05); border-radius: 8px;">
+        No custom pricing rules configured. Using base defaults ($30 plumbing, $45 roofing).
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = pricingRules.map((rule, idx) => `
+    <div class="pricing-rule-row" style="display:flex; gap:6px; align-items:center; background: rgba(0,0,0,0.1); padding: 6px; border-radius: 8px;" data-index="${idx}">
+      <select class="form-input form-select rule-niche" style="flex:1.2; font-size: 10px; padding: 6px; background: var(--bg-card); border-color: var(--border-card); color: #fff;">
+        <option value="plumbing" ${rule.niche === 'plumbing' ? 'selected' : ''}>Plumbing</option>
+        <option value="roofing" ${rule.niche === 'roofing' ? 'selected' : ''}>Roofing</option>
+        <option value="glass" ${rule.niche === 'glass' ? 'selected' : ''}>Glass</option>
+      </select>
+      <input type="text" class="form-input rule-city" style="flex:1.5; font-size: 10px; padding: 6px; background: var(--bg-card); border-color: var(--border-card); color: #fff;" value="${rule.city}" placeholder="City e.g. Newark">
+      <input type="number" class="form-input rule-price" style="width: 50px; font-size: 10px; padding: 6px; background: var(--bg-card); border-color: var(--border-card); color: #fff;" value="${rule.price}" placeholder="$">
+      <button class="btn btn-secondary" onclick="deletePricingRule(${idx})" style="padding: 6px 8px; color: #f87171; border-color: rgba(239, 68, 68, 0.1); font-size: 11px; line-height: 1;">&times;</button>
+    </div>
+  `).join('');
+}
+
+window.deletePricingRule = function(index) {
+  pricingRules.splice(index, 1);
+  renderPricingRules();
+};
+
+function setupPricingRulesListeners() {
+  const addBtn = document.getElementById("add-pricing-rule-btn");
+  const saveBtn = document.getElementById("save-pricing-rules-btn");
+
+  if (addBtn) {
+    addBtn.onclick = () => {
+      pricingRules.push({ niche: "plumbing", city: "", price: 30 });
+      renderPricingRules();
+    };
+  }
+
+  if (saveBtn) {
+    saveBtn.onclick = () => {
+      const rows = document.querySelectorAll("#pricing-rules-container .pricing-rule-row");
+      const updatedRules = [];
+      rows.forEach(row => {
+        const niche = row.querySelector(".rule-niche").value;
+        const city = row.querySelector(".rule-city").value.trim();
+        const price = parseFloat(row.querySelector(".rule-price").value) || 30;
+        if (city) {
+          updatedRules.push({ id: "pr-" + Date.now() + Math.random(), niche, city, price });
+        }
+      });
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "⚡ Saving Rules...";
+
+      fetch('/api/admin/pricing-rules/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rules: updatedRules })
+      })
+      .then(res => res.json())
+      .then(data => {
+        pricingRules = data.rules;
+        renderPricingRules();
+        triggerDynamicIslandNotification("📈 Pricing Rules Saved!");
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Pricing Rules";
+      })
+      .catch(err => {
+        console.error("Save pricing rules failed:", err);
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Pricing Rules";
+      });
+    };
+  }
+}
+
+// 👑 ADMIN: AI OPERATOR INSTRUCTIONS CONFIG
+function fetchAiInstructions() {
+  const textarea = document.getElementById("ai-system-instructions");
+  if (!textarea) return Promise.resolve();
+
+  return fetch('/api/admin/ai-instructions')
+    .then(res => res.json())
+    .then(data => {
+      textarea.value = data.systemInstructions || "";
+    })
+    .catch(err => console.error("Error fetching AI instructions:", err));
+}
+
+function setupAiInstructionsListeners() {
+  const saveBtn = document.getElementById("save-ai-instructions-btn");
+  const textarea = document.getElementById("ai-system-instructions");
+
+  if (saveBtn && textarea) {
+    saveBtn.onclick = () => {
+      const systemInstructions = textarea.value.trim();
+      if (!systemInstructions) return;
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "⚡ Saving Instructions...";
+
+      fetch('/api/admin/ai-instructions/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemInstructions })
+      })
+      .then(res => res.json())
+      .then(data => {
+        textarea.value = data.aiConfig.systemInstructions;
+        triggerDynamicIslandNotification("🤖 AI Operator Updated!");
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Operator Prompt";
+      })
+      .catch(err => {
+        console.error("Save AI instructions failed:", err);
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Operator Prompt";
+      });
+    };
+  }
 }

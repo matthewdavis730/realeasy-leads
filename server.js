@@ -307,6 +307,10 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(401).json({ error: "Invalid email or password credentials." });
   }
 
+  if (user.suspended) {
+    return res.status(403).json({ error: "Your contractor account has been suspended by Admin. Please contact support." });
+  }
+
   const { password: _, ...userWithoutPass } = user;
   res.json({ success: true, user: userWithoutPass });
 });
@@ -575,6 +579,22 @@ app.post('/api/leads/create', (req, res) => {
 
   const customerId = user ? user.id : "usr-homeowner";
 
+  // Dynamic Pricing Rules Engine Lookup
+  let finalPrice = parseFloat(price);
+  if (!finalPrice) {
+    const rules = db.pricingRules || [];
+    const matchedRule = rules.find(r => 
+      r.niche === niche && 
+      city.toLowerCase().includes(r.city.toLowerCase())
+    );
+    if (matchedRule) {
+      finalPrice = matchedRule.price;
+    } else {
+      // Fallback base pricing
+      finalPrice = niche === 'roofing' ? 45.00 : niche === 'glass' ? 35.00 : 30.00;
+    }
+  }
+
   const newLead = {
     id: "lead-" + Date.now(),
     customerId,
@@ -582,7 +602,7 @@ app.post('/api/leads/create', (req, res) => {
     title,
     city,
     description,
-    price: parseFloat(price) || 30.00,
+    price: finalPrice,
     customerName: customerName || "Emergency Client",
     customerPhone: customerPhone || "(510) 555-0811",
     date: "Just now",
@@ -802,6 +822,119 @@ app.get('/api/admin/contractors', (req, res) => {
     .map(({ password, ...c }) => c);
 
   res.json(contractors);
+});
+
+// 🛡️ API ROUTE: ADMIN ADJUST CONTRACTOR BALANCE
+app.post('/api/admin/contractors/adjust-balance', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+
+  const { contractorId, amount } = req.body;
+  const targetContractor = db.users.find(u => u.id === contractorId && u.role === 'contractor');
+  if (!targetContractor) {
+    return res.status(404).json({ error: "Contractor not found." });
+  }
+
+  const adjustVal = parseFloat(amount);
+  if (isNaN(adjustVal)) {
+    return res.status(400).json({ error: "Invalid adjustment amount." });
+  }
+
+  targetContractor.walletBalance += adjustVal;
+
+  const formattedDate = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ", " + new Date().toLocaleDateString([], { month: 'short', day: 'numeric' });
+  db.transactions.unshift({
+    userId: contractorId,
+    type: adjustVal >= 0 ? "deposit" : "unlock",
+    amount: Math.abs(adjustVal),
+    title: `Admin Manual Adjustment: ${adjustVal >= 0 ? '+' : '-'}$${Math.abs(adjustVal).toFixed(2)}`,
+    date: formattedDate
+  });
+
+  writeDB(db);
+  broadcast({ type: "WALLETS_UPDATED" });
+  res.json({ success: true, profile: targetContractor });
+});
+
+// 🛡️ API ROUTE: ADMIN TOGGLE CONTRACTOR SUSPENSION
+app.post('/api/admin/contractors/toggle-suspension', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+
+  const { contractorId } = req.body;
+  const targetContractor = db.users.find(u => u.id === contractorId && u.role === 'contractor');
+  if (!targetContractor) {
+    return res.status(404).json({ error: "Contractor not found." });
+  }
+
+  targetContractor.suspended = !targetContractor.suspended;
+  writeDB(db);
+  
+  broadcast({ type: "CONTRACTOR_SUSPENSION_TOGGLED", contractorId, suspended: targetContractor.suspended });
+  res.json({ success: true, contractor: targetContractor });
+});
+
+// 🛡️ API ROUTE: ADMIN GET PRICING RULES
+app.get('/api/admin/pricing-rules', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+  res.json(db.pricingRules || []);
+});
+
+// 🛡️ API ROUTE: ADMIN SAVE PRICING RULES
+app.post('/api/admin/pricing-rules/save', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+
+  const { rules } = req.body;
+  if (!Array.isArray(rules)) {
+    return res.status(400).json({ error: "Rules must be an array." });
+  }
+
+  db.pricingRules = rules;
+  writeDB(db);
+  res.json({ success: true, rules: db.pricingRules });
+});
+
+// 🛡️ API ROUTE: ADMIN GET AI INSTRUCTIONS
+app.get('/api/admin/ai-instructions', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+  res.json(db.aiConfig || { systemInstructions: "You are a professional local emergency operator." });
+});
+
+// 🛡️ API ROUTE: ADMIN SAVE AI INSTRUCTIONS
+app.post('/api/admin/ai-instructions/update', (req, res) => {
+  const db = readDB();
+  const adminUser = getRequestUser(req, db);
+  if (!adminUser || adminUser.role !== 'admin') {
+    return res.status(403).json({ error: "Admin credentials required." });
+  }
+
+  const { systemInstructions } = req.body;
+  if (typeof systemInstructions !== 'string') {
+    return res.status(400).json({ error: "Instructions must be a string." });
+  }
+
+  if (!db.aiConfig) db.aiConfig = {};
+  db.aiConfig.systemInstructions = systemInstructions;
+  writeDB(db);
+  res.json({ success: true, aiConfig: db.aiConfig });
 });
 
 app.use(express.static(__dirname));
